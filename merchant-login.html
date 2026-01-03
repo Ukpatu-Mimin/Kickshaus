@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merchant Login - Kickshaus</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="mobile-dark-mode.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+    <i class="fas fa-moon"></i>
+  </button>
+
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%2300A8E8' d='M50 10 L80 30 L80 70 L50 90 L20 70 L20 30 Z'/%3E%3Cpath fill='white' d='M35 40 Q50 35 65 40 L65 60 Q50 65 35 60 Z'/%3E%3C/svg%3E" alt="Kickshaus" class="auth-logo">
+        <h1 class="auth-title">Merchant Login</h1>
+        <p class="auth-subtitle">Access your merchant dashboard</p>
+      </div>
+
+      <form id="merchantLoginForm" class="auth-form">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <div class="input-wrapper">
+            <i class="fas fa-envelope input-icon"></i>
+            <input type="email" id="email" placeholder="Enter your email" required>
+          </div>
+          <div class="error-message" id="emailError"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-wrapper">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" id="password" placeholder="Enter your password" required>
+            <button type="button" class="toggle-password" onclick="togglePassword()">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+          <div class="error-message" id="passwordError"></div>
+        </div>
+
+        <button type="submit" class="auth-btn" id="loginBtn">
+          <span>Sign In</span>
+          <i class="fas fa-arrow-right"></i>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <p>Don't have an account? <a href="become-merchant.html">Apply Here</a></p>
+        <p><a href="index.html">← Back to Home</a></p>
+      </div>
+      
+      <div style="margin-top: 30px; padding: 20px; background: rgba(0, 168, 232, 0.1); border-radius: 12px; border-left: 4px solid var(--primary);">
+        <h3 style="margin-bottom: 12px; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+          <i class="fas fa-info-circle"></i> Test Credentials
+        </h3>
+        <p style="margin-bottom: 8px;"><strong>Email:</strong> merchant@test.com</p>
+        <p style="margin-bottom: 8px;"><strong>Password:</strong> Test1234!</p>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 12px;">
+          This is a demo merchant account. You'll be asked to change the password on first login.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Change Modal -->
+  <div id="passwordChangeModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: var(--bg-card); border-radius: 16px; padding: 32px; max-width: 500px; width: 100%; box-shadow: var(--shadow-lg);">
+      <h2 style="font-family: 'Playfair Display', serif; margin-bottom: 16px; color: var(--text-primary);">Change Password Required</h2>
+      <p style="margin-bottom: 24px; color: var(--text-muted);">You must change your password before accessing the dashboard</p>
+      
+      <form id="changePasswordForm">
+        <div class="form-group">
+          <label for="oldPassword">Current Password</label>
+          <input type="password" id="oldPassword" required style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary);">
+        </div>
+        
+        <div class="form-group">
+          <label for="newPassword">New Password (min 8 characters)</label>
+          <input type="password" id="newPassword" required minlength="8" style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary);">
+        </div>
+        
+        <div class="form-group">
+          <label for="confirmNewPassword">Confirm New Password</label>
+          <input type="password" id="confirmNewPassword" required style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary);">
+        </div>
+        
+        <button type="submit" class="auth-btn" style="width: 100%; margin-top: 8px;">Change Password</button>
+      </form>
+    </div>
+  </div>
+
+
+  <script src="merchant-auth.js"></script>
+  <script src="universal-theme.js"></script>
+  <script>
+    // Create demo merchant account on page load
+    (function() {
+      let merchants = JSON.parse(localStorage.getItem('merchants') || '[]');
+      
+      // Check if demo merchant exists
+      const demoExists = merchants.find(m => m.email === 'merchant@test.com');
+      
+      if (!demoExists) {
+        // Create demo merchant account
+        const demoMerchant = {
+          id: 'MERCH-DEMO-001',
+          applicationId: 'APP-DEMO-001',
+          email: 'merchant@test.com',
+          password: 'Test1234!',
+          mustChangePassword: true,
+          businessName: 'Demo Kicks Store',
+          fullName: 'Demo Merchant',
+          phone: '+234 800 000 0000',
+          address: 'Lagos, Nigeria',
+          website: 'https://demo.com',
+          status: 'approved',
+          approvedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString()
+        };
+        
+        merchants.push(demoMerchant);
+        localStorage.setItem('merchants', JSON.stringify(merchants));
+        console.log('✅ Demo merchant account created!');
+      }
+    })();
+    
+    function togglePassword() {
+      const input = document.getElementById('password');
+      const icon = document.querySelector('.toggle-password i');
+      
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    }
+
+    document.getElementById('merchantLoginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      
+      document.getElementById('emailError').textContent = '';
+      document.getElementById('passwordError').textContent = '';
+      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        document.getElementById('emailError').textContent = 'Please enter a valid email';
+        return;
+      }
+      
+      if (password.length < 6) {
+        document.getElementById('passwordError').textContent = 'Password must be at least 6 characters';
+        return;
+      }
+      
+      const btn = document.getElementById('loginBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span>Signing in...</span> <i class="fas fa-spinner fa-spin"></i>';
+      
+      setTimeout(() => {
+        const result = MerchantAuth.login(email, password);
+        
+        if (!result.success) {
+          showToast(result.message, 'error');
+          btn.disabled = false;
+          btn.innerHTML = '<span>Sign In</span> <i class="fas fa-arrow-right"></i>';
+          return;
+        }
+        
+        if (result.needsPasswordChange) {
+          document.getElementById('passwordChangeModal').style.display = 'flex';
+          btn.disabled = false;
+          btn.innerHTML = '<span>Sign In</span> <i class="fas fa-arrow-right"></i>';
+          return;
+        }
+        
+        showToast('Login successful! Redirecting...', 'success');
+        setTimeout(() => {
+          window.location.href = 'merchant-dashboard.html';
+        }, 1000);
+      }, 500);
+    });
+
+    document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const email = sessionStorage.getItem('merchantNeedsPasswordChange');
+      const oldPassword = document.getElementById('oldPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmNewPassword').value;
+      
+      if (newPassword !== confirmPassword) {
+        showToast('Passwords do not match', 'error');
+        return;
+      }
+      
+      if (newPassword.length < 8) {
+        showToast('Password must be at least 8 characters', 'error');
+        return;
+      }
+      
+      const result = MerchantAuth.forcePasswordChange(email, oldPassword, newPassword);
+      
+      if (result.success) {
+        showToast('Password changed! Redirecting to dashboard...', 'success');
+        setTimeout(() => {
+          window.location.href = 'merchant-dashboard.html';
+        }, 1000);
+      } else {
+        showToast(result.message, 'error');
+      }
+    });
+  </script>
+</body>
+</html>

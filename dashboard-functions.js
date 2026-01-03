@@ -1,6 +1,4 @@
-// ==========================================
-// PERFECT DASHBOARD - THE CLAUDE WAY 🚀
-// ==========================================
+
 
 // Helper function for star ratings
 function generateStars(rating) {
@@ -59,11 +57,11 @@ function showSection(sectionName) {
   }
   if (navItem) navItem.classList.add('active');
   
-  const titles = { overview: 'Overview', orders: 'Orders Management', products: 'Products Management', customers: 'Customers', analytics: 'Analytics & Reports', inventory: 'Inventory Management', reviews: 'Customer Reviews', settings: 'Settings' };
+  const titles = { overview: 'Overview', orders: 'Orders Management', products: 'Products Management', customers: 'Customers', analytics: 'Analytics & Reports', inventory: 'Inventory Management', reviews: 'Customer Reviews', merchants: 'Merchant Applications', settings: 'Settings' };
   document.getElementById('pageTitle').textContent = titles[sectionName] || sectionName;
   
   // Render content
-  const renderFunctions = { orders: renderOrdersSection, products: renderProductsSection, customers: renderCustomersSection, analytics: renderAnalyticsSection, inventory: renderInventorySection, reviews: renderReviewsSection, settings: renderSettingsSection };
+  const renderFunctions = { orders: renderOrdersSection, products: renderProductsSection, customers: renderCustomersSection, analytics: renderAnalyticsSection, inventory: renderInventorySection, reviews: renderReviewsSection,  merchants: renderMerchantsSection, settings: renderSettingsSection };
   if (renderFunctions[sectionName]) renderFunctions[sectionName]();
   
   document.getElementById('sidebar')?.classList.remove('active');
@@ -180,8 +178,6 @@ function saveOrderStatus(orderId) {
     renderOrdersSection();
   }
 }
-
-// Continue with other sections in next part...
 
 // ===== PRODUCTS SECTION =====
 function renderProductsSection() {
@@ -466,6 +462,80 @@ function deleteReview(reviewId) {
     }
   }
 }
+
+// merchants section
+function renderMerchantsSection() {
+  const section = document.getElementById('merchants-section');
+  const merchants = JSON.parse(localStorage.getItem('merchants') || '[]');
+
+  if (merchants.length === 0) {
+    section.innerHTML = `
+      <div class="card">
+        <p style="color: var(--text-muted);">No merchant applications yet.</p>
+      </div>
+    `;
+    return;
+  }
+
+  section.innerHTML = `
+    <div class="card">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Business Name</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Applied On</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${merchants.map(m => `
+              <tr>
+                <td><strong>${m.businessName}</strong></td>
+                <td>${m.email}</td>
+                <td>
+                  <span class="status-badge ${m.status === 'approved' ? 'completed' : 'pending'}">
+                    ${m.status}
+                  </span>
+                </td>
+                <td>${m.createdAt || '—'}</td>
+                <td>
+                  ${m.status !== 'approved' ? `
+                    <button class="btn btn-primary" onclick="approveMerchant('${m.id}')">
+                      Approve
+                    </button>
+                  ` : '—'}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ===============================
+// MERCHANT ADMIN ACTIONS
+// ===============================
+
+function approveMerchant(merchantId) {
+  const merchants = JSON.parse(localStorage.getItem('merchants') || '[]');
+  const merchant = merchants.find(m => m.id === merchantId);
+
+  if (!merchant) return;
+
+  merchant.status = 'approved';
+  merchant.mustChangePassword = true;
+
+  localStorage.setItem('merchants', JSON.stringify(merchants));
+  showToast('Merchant approved successfully');
+  renderMerchantsSection();
+}
+
+
 
 // ===== SETTINGS SECTION =====
 function renderSettingsSection() {

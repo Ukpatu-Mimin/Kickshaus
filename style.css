@@ -1030,11 +1030,40 @@ body.dark-theme .hero {
 
 @media (max-width: 768px) {
   .nav-menu {
-    display: none;
+    display: block;
+  }
+
+   .nav-menu {
+    position: fixed;
+    top: 72px; /* header height */
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 72px);
+
+    background: var(--bg-secondary);
+
+    display: none; /* IMPORTANT */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+
+    z-index: 1000;
+  }
+
+  /* SHOW menu when active */
+  .nav-menu.active {
+    display: flex;
+  }
+
+  /* Bigger tap targets */
+  .nav-link {
+    font-size: 1.4rem;
   }
   
   .mobile-menu-toggle {
     display: block;
+    z-index: 1001;
   }
   
   .products-grid,
@@ -2552,4 +2581,86 @@ input.error {
 .dashboard-section.active {
   display: block;
   opacity: 1;
+}
+
+/* Hide desktop menu on mobile, show toggle */
+@media (max-width: 768px) {
+  .nav-menu {
+    display: none ;
+  }
+
+   .nav-menu {
+    position: fixed;
+    top: 72px; /* header height */
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 72px);
+
+    background: var(--bg-secondary);
+
+    display: none; /* IMPORTANT */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+
+    z-index: 1000;
+  }
+
+  /* SHOW menu when active */
+  .nav-menu.active {
+    display: flex;
+  }
+
+  /* Bigger tap targets */
+  .nav-link {
+    font-size: 1.4rem;
+  }
+  .mobile-menu-toggle {
+    display: block !important;
+    z-index: 1001;
+  }
+}
+
+/* Mobile menu behavior */
+.mobile-menu {
+  transform: translateX(100%);
+}
+
+.mobile-menu.active {
+  transform: translateX(0);
+}
+
+/* Optional: nice overlay */
+.mobile-menu::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.mobile-menu.active::before {
+  opacity: 1;
+}
+
+.btn-outline {
+  padding: 12px 24px;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+  background: transparent;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+  background: var(--primary);
+  color: #fff;
 }

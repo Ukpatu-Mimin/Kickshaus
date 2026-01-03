@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - Kickshaus</title>
+  <title>Merchant Dashboard - Kickshaus</title>
   
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="mobile-dark-mode.css">
@@ -33,41 +33,24 @@
     .main-content { margin-left: 280px; flex: 1; padding: 32px; width: calc(100% - 280px); }
     .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
     .page-title { font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 900; color: var(--text-primary); }
-    .top-actions { display: flex; align-items: center; gap: 16px; }
-    .search-box { display: flex; align-items: center; gap: 8px; background: var(--bg-card); padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border-color); }
-    .search-box input { border: none; background: none; outline: none; color: var(--text-primary); width: 200px; }
-    .search-box i { color: var(--text-muted); }
-    .notification-btn { position: relative; width: 44px; height: 44px; border-radius: 50%; background: var(--bg-card); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; }
-    .notification-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
-    .notification-badge { position: absolute; top: -4px; right: -4px; background: var(--accent); color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: 700; }
-    .admin-profile { display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.3s ease; }
-    .admin-profile:hover { border-color: var(--primary); }
-    .admin-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; }
-    .admin-info { display: flex; flex-direction: column; }
-    .admin-name { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); }
-    .admin-role { font-size: 0.75rem; color: var(--text-muted); }
+    .merchant-info { display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color); }
+    .merchant-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; }
     
     /* Stats & Cards */
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 32px; }
     .stat-card { background: var(--bg-card); padding: 24px; border-radius: 16px; border: 1px solid var(--border-color); transition: all 0.3s ease; }
     .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-    .stat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-    .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+    .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 16px; }
     .stat-icon.blue { background: rgba(0, 168, 232, 0.1); color: var(--primary); }
     .stat-icon.green { background: rgba(76, 175, 80, 0.1); color: #4CAF50; }
     .stat-icon.orange { background: rgba(255, 152, 0, 0.1); color: #FF9800; }
     .stat-icon.purple { background: rgba(156, 39, 176, 0.1); color: #9C27B0; }
-    .stat-trend { display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
-    .stat-trend.up { background: rgba(76, 175, 80, 0.1); color: #4CAF50; }
-    .stat-trend.down { background: rgba(244, 67, 54, 0.1); color: #F44336; }
     .stat-value { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
     .stat-label { font-size: 0.9rem; color: var(--text-muted); }
     
     .card { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); padding: 24px; margin-bottom: 24px; }
     .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .card-title { font-size: 1.3rem; font-weight: 700; color: var(--text-primary); }
-    .card-action { color: var(--primary); text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.3s ease; cursor: pointer; }
-    .card-action:hover { text-decoration: underline; }
     
     /* Tables */
     .table-container { overflow-x: auto; }
@@ -77,9 +60,8 @@
     tr:hover { background: var(--bg-primary); }
     .status-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
     .status-badge.pending { background: rgba(255, 152, 0, 0.1); color: #FF9800; }
-    .status-badge.completed { background: rgba(76, 175, 80, 0.1); color: #4CAF50; }
-    .status-badge.cancelled { background: rgba(244, 67, 54, 0.1); color: #F44336; }
-    .status-badge.processing { background: rgba(0, 168, 232, 0.1); color: var(--primary); }
+    .status-badge.approved { background: rgba(76, 175, 80, 0.1); color: #4CAF50; }
+    .status-badge.rejected { background: rgba(244, 67, 54, 0.1); color: #F44336; }
     
     /* Buttons */
     .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; font-family: 'Poppins', sans-serif; }
@@ -87,6 +69,19 @@
     .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 168, 232, 0.3); }
     .btn-secondary { background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color); }
     .btn-secondary:hover { background: var(--bg-card); border-color: var(--primary); }
+    
+    /* Forms */
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary); }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary); font-family: 'Poppins', sans-serif; }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0, 168, 232, 0.1); }
+    
+    /* Image Upload */
+    .image-upload-container { display: flex; gap: 12px; flex-wrap: wrap; }
+    .image-preview { position: relative; width: 100px; height: 100px; border: 2px dashed var(--border-color); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; }
+    .image-preview:hover { border-color: var(--primary); }
+    .image-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+    .image-preview .remove-image { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.8rem; }
     
     /* Mobile */
     .sidebar-toggle { display: none; position: fixed; top: 20px; left: 20px; z-index: 1001; background: var(--bg-card); border: none; padding: 12px; border-radius: 8px; box-shadow: var(--shadow-md); cursor: pointer; color: var(--text-primary); font-size: 1.3rem; }
@@ -98,7 +93,6 @@
       .main-content { margin-left: 0; width: 100%; padding: 80px 20px 20px; }
       .page-title { font-size: 2rem; }
       .stats-grid { grid-template-columns: 1fr; }
-      .search-box, .admin-info { display: none; }
     }
     
     /* Sections */
@@ -117,20 +111,13 @@
       <div class="sidebar-header">
         <div class="sidebar-logo">
           <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%2300A8E8' d='M50 10 L80 30 L80 70 L50 90 L20 70 L20 30 Z'/%3E%3Cpath fill='white' d='M35 40 Q50 35 65 40 L65 60 Q50 65 35 60 Z'/%3E%3C/svg%3E" alt="Logo">
-          <span>Kickshaus</span>
+          <span>Merchant</span>
         </div>
       </div>
       <nav class="sidebar-nav">
         <a class="nav-item active" data-section="overview"><i class="fas fa-chart-line"></i><span>Overview</span></a>
-        <a class="nav-item" data-section="orders"><i class="fas fa-shopping-bag"></i><span>Orders</span></a>
-        <a class="nav-item" data-section="products"><i class="fas fa-box"></i><span>Products</span></a>
-        <a class="nav-item" data-section="customers"><i class="fas fa-users"></i><span>Customers</span></a>
-        <a class="nav-item" data-section="analytics"><i class="fas fa-chart-pie"></i><span>Analytics</span></a>
-        <a class="nav-item" data-section="inventory"><i class="fas fa-warehouse"></i><span>Inventory</span></a>
-        <a class="nav-item" data-section="reviews"><i class="fas fa-star"></i><span>Reviews</span></a>
-        <a class="nav-item" data-section="merchants">
-  <i class="fas fa-store"></i><span>Merchants</span>
-</a>
+        <a class="nav-item" data-section="add-product"><i class="fas fa-plus-circle"></i><span>Add Product</span></a>
+        <a class="nav-item" data-section="my-products"><i class="fas fa-box"></i><span>My Products</span></a>
         <a class="nav-item" data-section="settings"><i class="fas fa-cog"></i><span>Settings</span></a>
       </nav>
       <div class="sidebar-footer">
@@ -141,86 +128,32 @@
     <main class="main-content">
       <div class="top-bar">
         <h1 class="page-title" id="pageTitle">Overview</h1>
-        <div class="top-actions">
-          <div class="search-box"><i class="fas fa-search"></i><input type="text" placeholder="Search..."></div>
-          <button class="notification-btn"><i class="fas fa-bell"></i><span class="notification-badge">3</span></button>
-          <div class="admin-profile">
-            <div class="admin-avatar">A</div>
-            <div class="admin-info"><div class="admin-name">Admin</div><div class="admin-role">Super Admin</div></div>
+        <div class="merchant-info">
+          <div class="merchant-avatar" id="merchantAvatar">M</div>
+          <div>
+            <div style="font-size: 0.9rem; font-weight: 600;" id="merchantName">Merchant</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);" id="merchantEmail">merchant@email.com</div>
           </div>
         </div>
       </div>
 
       <!-- OVERVIEW SECTION -->
-      <div class="dashboard-section active" id="overview-section">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon blue"><i class="fas fa-dollar-sign"></i></div>
-              <div class="stat-trend up"><i class="fas fa-arrow-up"></i>12.5%</div>
-            </div>
-            <div class="stat-value">₦12.5M</div>
-            <div class="stat-label">Total Revenue</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon green"><i class="fas fa-shopping-cart"></i></div>
-              <div class="stat-trend up"><i class="fas fa-arrow-up"></i>8.3%</div>
-            </div>
-            <div class="stat-value">1,284</div>
-            <div class="stat-label">Total Orders</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon orange"><i class="fas fa-users"></i></div>
-              <div class="stat-trend up"><i class="fas fa-arrow-up"></i>15.2%</div>
-            </div>
-            <div class="stat-value">8,429</div>
-            <div class="stat-label">Total Customers</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon purple"><i class="fas fa-box"></i></div>
-              <div class="stat-trend down"><i class="fas fa-arrow-down"></i>3.1%</div>
-            </div>
-            <div class="stat-value">234</div>
-            <div class="stat-label">Products</div>
-          </div>
-        </div>
+      <div class="dashboard-section active" id="overview-section"></div>
 
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">Recent Orders</h2>
-            <a class="card-action" onclick="showSection('orders')">View All</a>
-          </div>
-          <div class="table-container">
-            <table>
-              <thead><tr><th>Order ID</th><th>Customer</th><th>Product</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
-              <tbody>
-                <tr><td><strong>#ORD-001</strong></td><td>John Doe</td><td>Premium Leather Loafer</td><td><strong>₦180,000</strong></td><td><span class="status-badge completed">Completed</span></td><td>Dec 30, 2025</td></tr>
-                <tr><td><strong>#ORD-002</strong></td><td>Jane Smith</td><td>Urban Street Sneaker</td><td><strong>₦145,000</strong></td><td><span class="status-badge processing">Processing</span></td><td>Dec 30, 2025</td></tr>
-                <tr><td><strong>#ORD-003</strong></td><td>Mike Johnson</td><td>Executive Oxford Shoe</td><td><strong>₦195,000</strong></td><td><span class="status-badge pending">Pending</span></td><td>Dec 29, 2025</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      <!-- ADD PRODUCT SECTION -->
+      <div class="dashboard-section" id="add-product-section"></div>
 
-      <!-- OTHER SECTIONS (Populated by JS) -->
-      <div class="dashboard-section" id="orders-section"></div>
-      <div class="dashboard-section" id="products-section"></div>
-      <div class="dashboard-section" id="customers-section"></div>
-      <div class="dashboard-section" id="analytics-section"></div>
-      <div class="dashboard-section" id="inventory-section"></div>
-      <div class="dashboard-section" id="reviews-section"></div>
-      <div class="dashboard-section" id="merchants-section"></div>
+      <!-- MY PRODUCTS SECTION -->
+      <div class="dashboard-section" id="my-products-section"></div>
+
+      <!-- SETTINGS SECTION -->
       <div class="dashboard-section" id="settings-section"></div>
     </main>
   </div>
 
   <script src="global-state.js"></script>
-  <script src="admin-auth.js"></script>
+  <script src="merchant-auth.js"></script>
   <script src="universal-theme.js"></script>
-  <script src="dashboard-functions.js"></script>
+  <script src="merchant-dashboard-functions.js"></script>
 </body>
 </html>
