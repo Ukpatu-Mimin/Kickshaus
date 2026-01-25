@@ -45,15 +45,15 @@ const notFoundHandler = (req, res, next) => {
  * Global error handler middleware
  */
 const errorHandler = (err, req, res, next) => {
-  // Log error for debugging
-  console.error('Error:', {
-    message: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-    url: req.originalUrl,
-    method: req.method,
-    body: req.body,
-    user: req.user?.id
-  });
+  // Log error only in development
+  if (process.env.NODE_ENV !== 'production') {
+    console.error('Error:', {
+      message: err.message,
+      stack: err.stack,
+      url: req.originalUrl,
+      method: req.method
+    });
+  }
   
   // Default error values
   let statusCode = err.statusCode || 500;

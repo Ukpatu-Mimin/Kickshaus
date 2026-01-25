@@ -523,10 +523,103 @@ const cancelOrder = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * Validate a coupon code
+ * POST /api/orders/validate-coupon
+ */
+const validateCoupon = asyncHandler(async (req, res) => {
+  const { code, subtotal } = req.validatedBody || req.body;
+  
+  if (!code) {
+    return res.json({
+      success: true,
+      data: { valid: false, message: 'Coupon code is required' }
+    });
+  }
+  
+  const { data: coupon, error } = await supabaseAdmin
+    .from('coupons')
+    .select('*')
+    .eq('code', code.toUpperCase())
+    .eq('is_active', true)
+    .single();
+  
+  if (error || !coupon) {
+    return res.json({
+      success: true,
+      data: { valid: false, message: 'Invalid or expired coupon code' }
+    });
+  }
+  
+  // Check expiration
+  const now = new Date();
+  const expiresAt = coupon.expires_at ? new Date(coupon.expires_at) : null;
+  const startsAt = coupon.starts_at ? new Date(coupon.starts_at) : null;
+  
+  if (startsAt && now < startsAt) {
+    return res.json({
+      success: true,
+      data: { valid: false, message: 'Coupon is not yet active' }
+    });
+  }
+  
+  if (expiresAt && now > expiresAt) {
+    return res.json({
+      success: true,
+      data: { valid: false, message: 'Coupon has expired' }
+    });
+  }
+  
+  // Check usage limit
+  if (coupon.usage_limit !== null && coupon.usage_count >= coupon.usage_limit) {
+    return res.json({
+      success: true,
+      data: { valid: false, message: 'Coupon usage limit reached' }
+    });
+  }
+  
+  // Check minimum order amount
+  const orderSubtotal = parseFloat(subtotal) || 0;
+  if (coupon.min_order_amount && orderSubtotal < coupon.min_order_amount) {
+    return res.json({
+      success: true,
+      data: { 
+        valid: false, 
+        message: `Minimum order amount is ₦${coupon.min_order_amount.toLocaleString()}` 
+      }
+    });
+  }
+  
+  // Calculate discount
+  let discountAmount = 0;
+  if (coupon.discount_type === 'percentage') {
+    discountAmount = orderSubtotal * (coupon.discount_value / 100);
+    if (coupon.max_discount_amount) {
+      discountAmount = Math.min(discountAmount, coupon.max_discount_amount);
+    }
+  } else {
+    discountAmount = coupon.discount_value;
+  }
+  
+  res.json({
+    success: true,
+    data: {
+      valid: true,
+      code: coupon.code,
+      discount_type: coupon.discount_type,
+      discount_value: coupon.discount_value,
+      discount_amount: Math.round(discountAmount),
+      description: coupon.description,
+      message: `Coupon applied! You save ₦${Math.round(discountAmount).toLocaleString()}`
+    }
+  });
+});
+
 module.exports = {
   getOrders,
   getOrder,
   createOrder,
   updateOrderStatus,
-  cancelOrder
+  cancelOrder,
+  validateCoupon
 };

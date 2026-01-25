@@ -62,12 +62,13 @@ const authenticate = async (req, res, next) => {
       .eq('id', user.id)
       .single();
     
-    if (profileError) {
-      console.error('Error fetching profile:', profileError);
-      return res.status(500).json({
+    // Treat missing profile or database error as authentication failure
+    // This prevents user enumeration attacks
+    if (profileError || !profile) {
+      return res.status(401).json({
         success: false,
-        error: 'Profile fetch failed',
-        message: 'Could not retrieve user profile'
+        error: 'Authentication failed',
+        message: 'Unable to authenticate user'
       });
     }
     
@@ -84,7 +85,6 @@ const authenticate = async (req, res, next) => {
     
     next();
   } catch (error) {
-    console.error('Authentication error:', error);
     return res.status(500).json({
       success: false,
       error: 'Authentication failed',
@@ -132,7 +132,6 @@ const optionalAuth = async (req, res, next) => {
     
     next();
   } catch (error) {
-    console.error('Optional auth error:', error);
     req.user = null;
     next();
   }
