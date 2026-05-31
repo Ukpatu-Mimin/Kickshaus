@@ -550,6 +550,21 @@ body.dark-theme.dashboard-body {
   color: #FF6B6B;
 }
 
+.status-badge.approved, .status-badge.delivered {
+  background: rgba(4, 170, 109, 0.1);
+  color: #04AA6D;
+}
+
+.status-badge.rejected {
+  background: rgba(217, 30, 24, 0.1);
+  color: #D91E18;
+}
+
+.status-badge.shipped {
+  background: rgba(52, 152, 219, 0.1);
+  color: #3498DB;
+}
+
 .status-badge.active {
   background: rgba(102, 187, 106, 0.1);
   color: #66BB6A;

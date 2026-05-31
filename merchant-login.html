@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Merchant Login - Kickshaus</title>
   
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="auth.css">
-  <link rel="stylesheet" href="mobile-dark-mode.css">
+  <link rel="stylesheet" href="public/css/style.css">
+  <link rel="stylesheet" href="public/css/auth.css">
+  <link rel="stylesheet" href="public/css/mobile-dark-mode.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -55,17 +55,13 @@
 
       <div class="auth-footer">
         <p>Don't have an account? <a href="become-merchant.html">Apply Here</a></p>
+        <p><a href="login.html"><i class="fas fa-user"></i> Login as a Customer</a></p>
         <p><a href="index.html">← Back to Home</a></p>
       </div>
       
-      <div style="margin-top: 30px; padding: 20px; background: rgba(0, 168, 232, 0.1); border-radius: 12px; border-left: 4px solid var(--primary);">
-        <h3 style="margin-bottom: 12px; color: var(--primary); display: flex; align-items: center; gap: 8px;">
-          <i class="fas fa-info-circle"></i> Test Credentials
-        </h3>
-        <p style="margin-bottom: 8px;"><strong>Email:</strong> merchant@test.com</p>
-        <p style="margin-bottom: 8px;"><strong>Password:</strong> Test1234!</p>
-        <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 12px;">
-          This is a demo merchant account. You'll be asked to change the password on first login.
+      <div style="margin-top: 30px; text-align: center;">
+        <p style="font-size: 0.95rem; color: var(--text-muted);">
+          Don't have a merchant account? <a href="become-merchant.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">Apply Now</a>
         </p>
       </div>
     </div>
@@ -99,40 +95,22 @@
   </div>
 
 
-  <script src="merchant-auth.js"></script>
-  <script src="universal-theme.js"></script>
+  <script src="public/js/api.js"></script>
+  <script src="public/js/global-state.js"></script>
+  <script src="public/js/api-client.js"></script>
+  <script src="public/js/universal-theme.js"></script>
   <script>
-    // Create demo merchant account on page load
-    (function() {
-      let merchants = JSON.parse(localStorage.getItem('merchants') || '[]');
+    // Check for errors in URL
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const error = urlParams.get('error');
+      const message = urlParams.get('message');
       
-      // Check if demo merchant exists
-      const demoExists = merchants.find(m => m.email === 'merchant@test.com');
-      
-      if (!demoExists) {
-        // Create demo merchant account
-        const demoMerchant = {
-          id: 'MERCH-DEMO-001',
-          applicationId: 'APP-DEMO-001',
-          email: 'merchant@test.com',
-          password: 'Test1234!',
-          mustChangePassword: true,
-          businessName: 'Demo Kicks Store',
-          fullName: 'Demo Merchant',
-          phone: '+234 800 000 0000',
-          address: 'Lagos, Nigeria',
-          website: 'https://demo.com',
-          status: 'approved',
-          approvedAt: new Date().toISOString(),
-          createdAt: new Date().toISOString()
-        };
-        
-        merchants.push(demoMerchant);
-        localStorage.setItem('merchants', JSON.stringify(merchants));
-        console.log('✅ Demo merchant account created!');
+      if (error && message) {
+        showToast(decodeURIComponent(message), 'error');
       }
-    })();
-    
+    });
+
     function togglePassword() {
       const input = document.getElementById('password');
       const icon = document.querySelector('.toggle-password i');
@@ -146,7 +124,7 @@
       }
     }
 
-    document.getElementById('merchantLoginForm').addEventListener('submit', function(e) {
+    document.getElementById('merchantLoginForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const email = document.getElementById('email').value.trim();
@@ -170,57 +148,23 @@
       btn.disabled = true;
       btn.innerHTML = '<span>Signing in...</span> <i class="fas fa-spinner fa-spin"></i>';
       
-      setTimeout(() => {
-        const result = MerchantAuth.login(email, password);
+      try {
+        // Call backend API for merchant login
+        const response = await window.api.loginMerchant(email, password);
         
-        if (!result.success) {
-          showToast(result.message, 'error');
-          btn.disabled = false;
-          btn.innerHTML = '<span>Sign In</span> <i class="fas fa-arrow-right"></i>';
-          return;
+        if (response.success) {
+          showToast('✓ Merchant login successful!');
+          setTimeout(() => {
+            window.location.href = 'merchant-dashboard.html';
+          }, 1000);
+        } else {
+          throw new Error(response.error || 'Login failed');
         }
-        
-        if (result.needsPasswordChange) {
-          document.getElementById('passwordChangeModal').style.display = 'flex';
-          btn.disabled = false;
-          btn.innerHTML = '<span>Sign In</span> <i class="fas fa-arrow-right"></i>';
-          return;
-        }
-        
-        showToast('Login successful! Redirecting...', 'success');
-        setTimeout(() => {
-          window.location.href = 'merchant-dashboard.html';
-        }, 1000);
-      }, 500);
-    });
-
-    document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const email = sessionStorage.getItem('merchantNeedsPasswordChange');
-      const oldPassword = document.getElementById('oldPassword').value;
-      const newPassword = document.getElementById('newPassword').value;
-      const confirmPassword = document.getElementById('confirmNewPassword').value;
-      
-      if (newPassword !== confirmPassword) {
-        showToast('Passwords do not match', 'error');
-        return;
-      }
-      
-      if (newPassword.length < 8) {
-        showToast('Password must be at least 8 characters', 'error');
-        return;
-      }
-      
-      const result = MerchantAuth.forcePasswordChange(email, oldPassword, newPassword);
-      
-      if (result.success) {
-        showToast('Password changed! Redirecting to dashboard...', 'success');
-        setTimeout(() => {
-          window.location.href = 'merchant-dashboard.html';
-        }, 1000);
-      } else {
-        showToast(result.message, 'error');
+      } catch (error) {
+        console.error('Merchant login error:', error);
+        showToast('✗ ' + (error.message || 'Login failed. Please try again.'), 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<span>Sign In</span> <i class="fas fa-arrow-right"></i>';
       }
     });
   </script>

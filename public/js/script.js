@@ -4,31 +4,51 @@
 
 // This file depends on global-state.js being loaded first
 
-// ===== THEME TOGGLE =====
-const themeToggle = document.getElementById('themeToggle');
-if (themeToggle) {
-  const body = document.body;
-  const themeIcon = themeToggle.querySelector('i');
-
-  // Load saved theme
-  const savedTheme = localStorage.getItem('theme') || 'light';
-  if (savedTheme === 'dark') {
-    body.classList.add('dark-theme');
-    themeIcon.classList.replace('fa-moon', 'fa-sun');
+// ===== HELPER FUNCTIONS =====
+/**
+ * Get the primary image URL for a product
+ * @param {Object} product - Product object
+ * @returns {string} - Image URL or placeholder
+ */
+function getProductImageUrl(product) {
+  const placeholder = 'images/placeholder.svg';
+  if (!product || !product.images) return placeholder;
+  if (Array.isArray(product.images) && product.images.length > 0) {
+    return product.images[0];
   }
+  if (typeof product.images === 'object' && product.images.main) {
+    return product.images.main;
+  }
+  return placeholder;
+}
 
-  themeToggle.addEventListener('click', () => {
-    body.classList.toggle('dark-theme');
-    const isDark = body.classList.contains('dark-theme');
-    
-    if (isDark) {
+// ===== THEME TOGGLE =====
+{
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    const body = document.body;
+    const themeIcon = themeToggle.querySelector('i');
+
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
+      body.classList.add('dark-theme');
       themeIcon.classList.replace('fa-moon', 'fa-sun');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      themeIcon.classList.replace('fa-sun', 'fa-moon');
-      localStorage.setItem('theme', 'light');
     }
-  });
+
+    themeToggle.addEventListener('click', () => {
+      body.classList.toggle('dark-theme');
+      const isDark = body.classList.contains('dark-theme');
+      
+      if (isDark) {
+        themeIcon.classList.replace('fa-moon', 'fa-sun');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        themeIcon.classList.replace('fa-sun', 'fa-moon');
+        localStorage.setItem('theme', 'light');
+      }
+    });
+  }
 }
 
 // ===== SEARCH FUNCTIONALITY =====
@@ -151,10 +171,16 @@ function renderProducts() {
   
   const products = PRODUCTS_DATABASE.slice(0, 6); // Show first 6 products
   
+  // Handle empty state
+  if (products.length === 0) {
+    grid.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--text-muted); grid-column: 1 / -1;">No products available at the moment. Please check back later.</p>';
+    return;
+  }
+  
   grid.innerHTML = products.map(product => `
     <div class="product-card" data-id="${product.id}">
       <div class="product-image" onclick="window.location.href='product-detail.html?id=${product.id}'" style="cursor: pointer;">
-        <img src="${product.images[0]}" alt="${product.name}">
+        <img src="${getProductImageUrl(product)}" alt="${product.name}">
         <div class="product-actions" style="opacity: 1; transform: translateX(0);">
           <button class="action-btn favorite-btn ${KickshausState.isFavorited(product.id) ? 'active' : ''}" 
                   data-id="${product.id}" 
@@ -201,10 +227,16 @@ function renderFeatured() {
   
   const featuredProducts = PRODUCTS_DATABASE.slice(0, 4);
   
+  // Handle empty state
+  if (featuredProducts.length === 0) {
+    grid.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--text-muted); grid-column: 1 / -1;">No featured products available.</p>';
+    return;
+  }
+  
   grid.innerHTML = featuredProducts.map(product => `
     <div class="featured-card" data-id="${product.id}" onclick="window.location.href='product-detail.html?id=${product.id}'" style="cursor:pointer;">
       <div class="featured-image">
-        <img src="${product.images[0]}" alt="${product.name}">
+        <img src="${getProductImageUrl(product)}" alt="${product.name}">
         <div class="product-actions" style="position:absolute; top:12px; right:12px; display:flex; flex-direction:column; gap:8px;">
           <button class="action-btn favorite-btn ${KickshausState.isFavorited(product.id) ? 'active' : ''}" 
                   data-id="${product.id}" 
@@ -235,16 +267,22 @@ function renderBestsellers() {
   const grid = document.querySelector('.bestsellers-grid');
   if (!grid) return;
   
-  const bestSellers = PRODUCTS_DATABASE.filter(p => p.badge === 'bestseller').slice(0, 3);
+  let bestSellers = PRODUCTS_DATABASE.filter(p => p.badge === 'bestseller').slice(0, 3);
   if (bestSellers.length === 0) {
     // If no bestsellers, show first 3 products
-    bestSellers.push(...PRODUCTS_DATABASE.slice(0, 3));
+    bestSellers = PRODUCTS_DATABASE.slice(0, 3);
+  }
+  
+  // Handle empty state
+  if (bestSellers.length === 0) {
+    grid.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--text-muted); grid-column: 1 / -1;">No bestsellers available.</p>';
+    return;
   }
   
   grid.innerHTML = bestSellers.map(product => `
     <div class="product-card featured" data-id="${product.id}" onclick="window.location.href='product-detail.html?id=${product.id}'" style="cursor:pointer;">
       <div class="product-image">
-        <img src="${product.images[0]}" alt="${product.name}">
+        <img src="${getProductImageUrl(product)}" alt="${product.name}">
         <div class="product-actions">
           <button class="action-btn favorite-btn ${KickshausState.isFavorited(product.id) ? 'active' : ''}" 
                   data-id="${product.id}" 
@@ -265,8 +303,8 @@ function renderBestsellers() {
         <h3 class="product-name">${product.name}</h3>
         <p class="product-category">${product.category}</p>
         <div class="product-rating">
-          ${generateStars(product.rating)}
-          <span>(${product.rating})</span>
+          ${generateStars(product.rating || 4.5)}
+          <span>(${product.rating || 4.5})</span>
         </div>
         <div class="product-footer">
           <span class="product-price">${formatCurrency(product.price)}</span>
@@ -354,17 +392,17 @@ function handleQuickAddToCart(product) {
 const heroSlides = [
   {
     id: 1,
-    image: "images/ChatGPT Image Dec 2, 2025, 10_51_42 PM.png",
+    image: "images/hero-shoe-1.png",
     alt: "Nike React Infinity Run"
   },
   {
     id: 2,
-    image: "images/pair-brown-shoes-with-black-leather-sole-word-bottom__1_-removebg-preview.png",
+    image: "images/hero-shoe-2.png",
     alt: "Red Sports Sneaker"
   },
   {
     id: 3,
-    image: "images/ryan-waring-164_6wVEHfI-unsplash-removebg-preview.png",
+    image: "images/hero-shoe-3.png",
     alt: "Premium Sneaker Collection"
   }
 ];
@@ -511,12 +549,9 @@ function initializeAnimations() {
 }
 
 // ===== INITIALIZATION =====
-document.addEventListener('DOMContentLoaded', () => {
-  // Render all sections
-  renderProducts();
-  renderFeatured();
-  renderBestsellers();
-  renderReviews();
+document.addEventListener('DOMContentLoaded', async () => {
+  // Load products from API first, then render
+  await loadProducts();
   
   // Initialize features
   initializeSearch();
@@ -529,3 +564,40 @@ document.addEventListener('DOMContentLoaded', () => {
   
   console.log('✨ Kickshaus initialized successfully!');
 });
+
+/**
+ * Load products from the API and render all product sections
+ */
+async function loadProducts() {
+  try {
+    // Show loading state
+    const productGrid = document.querySelector('.products-grid');
+    const featuredGrid = document.querySelector('.featured-grid');
+    const bestsellersGrid = document.querySelector('.bestsellers-grid');
+    
+    if (productGrid) {
+      productGrid.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--text-muted);">Loading products...</p>';
+    }
+    
+    // Load products from API (this function is defined in global-state.js)
+    if (typeof loadProductsFromAPI === 'function') {
+      await loadProductsFromAPI();
+    }
+    
+    // Render all sections with loaded products
+    renderProducts();
+    renderFeatured();
+    renderBestsellers();
+    renderReviews();
+    
+  } catch (error) {
+    console.error('Failed to load products:', error);
+    showToast('Could not load products. Please try again later.', 'error');
+    
+    // Show error state
+    const productGrid = document.querySelector('.products-grid');
+    if (productGrid) {
+      productGrid.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--accent);">Failed to load products. Please refresh the page.</p>';
+    }
+  }
+}

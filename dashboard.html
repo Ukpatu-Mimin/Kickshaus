@@ -3,224 +3,685 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - Kickshaus</title>
+  <title>My Dashboard - Kickshaus</title>
   
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="mobile-dark-mode.css">
+  <link rel="stylesheet" href="public/css/style.css">
+  <link rel="stylesheet" href="public/css/mobile-dark-mode.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Poppins', sans-serif; background: var(--bg-primary); color: var(--text-primary); }
-    .dashboard-container { display: flex; min-height: 100vh; }
+    .dashboard-container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+    .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; flex-wrap: wrap; gap: 20px; }
+    .page-title { font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 900; }
+    .logout-btn { padding: 8px 20px; border: 2px solid var(--accent); color: var(--accent); background: transparent; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+    .logout-btn:hover { background: var(--accent); color: white; }
     
-    /* Sidebar */
-    .sidebar { width: 280px; background: var(--bg-card); border-right: 1px solid var(--border-color); padding: 24px 0; position: fixed; height: 100vh; overflow-y: auto; transition: all 0.3s ease; z-index: 100; }
-    .sidebar-header { padding: 0 24px 24px; border-bottom: 1px solid var(--border-color); }
-    .sidebar-logo { display: flex; align-items: center; gap: 12px; font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 900; color: var(--primary); }
-    .sidebar-logo img { width: 40px; height: 40px; }
-    .sidebar-nav { padding: 24px 0; }
-    .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 24px; color: var(--text-secondary); text-decoration: none; transition: all 0.3s ease; cursor: pointer; border-left: 3px solid transparent; }
-    .nav-item:hover { background: var(--bg-primary); color: var(--primary); border-left-color: var(--primary); }
-    .nav-item.active { background: rgba(0, 168, 232, 0.1); color: var(--primary); border-left-color: var(--primary); font-weight: 600; }
-    .nav-item i { width: 20px; font-size: 1.1rem; }
-    .sidebar-footer { padding: 24px; border-top: 1px solid var(--border-color); margin-top: auto; }
-    .logout-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
-    .logout-btn:hover { background: #ff5252; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3); }
+    .section-card { background: var(--bg-card); border-radius: 16px; padding: 32px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); margin-bottom: 32px; }
+    .section-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); }
     
-    /* Main Content */
-    .main-content { margin-left: 280px; flex: 1; padding: 32px; width: calc(100% - 280px); }
-    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
-    .page-title { font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 900; color: var(--text-primary); }
-    .top-actions { display: flex; align-items: center; gap: 16px; }
-    .search-box { display: flex; align-items: center; gap: 8px; background: var(--bg-card); padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border-color); }
-    .search-box input { border: none; background: none; outline: none; color: var(--text-primary); width: 200px; }
-    .search-box i { color: var(--text-muted); }
-    .notification-btn { position: relative; width: 44px; height: 44px; border-radius: 50%; background: var(--bg-card); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; }
-    .notification-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
-    .notification-badge { position: absolute; top: -4px; right: -4px; background: var(--accent); color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: 700; }
-    .admin-profile { display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.3s ease; }
-    .admin-profile:hover { border-color: var(--primary); }
-    .admin-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; }
-    .admin-info { display: flex; flex-direction: column; }
-    .admin-name { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); }
-    .admin-role { font-size: 0.75rem; color: var(--text-muted); }
+        /* Orders Table */
     
-    /* Stats & Cards */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 32px; }
-    .stat-card { background: var(--bg-card); padding: 24px; border-radius: 16px; border: 1px solid var(--border-color); transition: all 0.3s ease; }
-    .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-    .stat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-    .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
-    .stat-icon.blue { background: rgba(0, 168, 232, 0.1); color: var(--primary); }
-    .stat-icon.green { background: rgba(76, 175, 80, 0.1); color: #4CAF50; }
-    .stat-icon.orange { background: rgba(255, 152, 0, 0.1); color: #FF9800; }
-    .stat-icon.purple { background: rgba(156, 39, 176, 0.1); color: #9C27B0; }
-    .stat-trend { display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
-    .stat-trend.up { background: rgba(76, 175, 80, 0.1); color: #4CAF50; }
-    .stat-trend.down { background: rgba(244, 67, 54, 0.1); color: #F44336; }
-    .stat-value { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
-    .stat-label { font-size: 0.9rem; color: var(--text-muted); }
+        .orders-table { width: 100%; border-collapse: collapse; }
     
-    .card { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); padding: 24px; margin-bottom: 24px; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .card-title { font-size: 1.3rem; font-weight: 700; color: var(--text-primary); }
-    .card-action { color: var(--primary); text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.3s ease; cursor: pointer; }
-    .card-action:hover { text-decoration: underline; }
+        .orders-table th { text-align: left; padding: 16px; background: var(--bg-primary); font-weight: 600; }
     
-    /* Tables */
-    .table-container { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; }
-    th { text-align: left; padding: 12px; background: var(--bg-primary); color: var(--text-primary); font-weight: 600; font-size: 0.9rem; border-bottom: 2px solid var(--border-color); }
-    td { padding: 16px 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
-    tr:hover { background: var(--bg-primary); }
-    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
-    .status-badge.pending { background: rgba(255, 152, 0, 0.1); color: #FF9800; }
-    .status-badge.completed { background: rgba(76, 175, 80, 0.1); color: #4CAF50; }
-    .status-badge.cancelled { background: rgba(244, 67, 54, 0.1); color: #F44336; }
-    .status-badge.processing { background: rgba(0, 168, 232, 0.1); color: var(--primary); }
+        .orders-table td { padding: 16px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
     
-    /* Buttons */
-    .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; font-family: 'Poppins', sans-serif; }
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 168, 232, 0.3); }
-    .btn-secondary { background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color); }
-    .btn-secondary:hover { background: var(--bg-card); border-color: var(--primary); }
+        .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; text-transform: capitalize; }
     
-    /* Mobile */
-    .sidebar-toggle { display: none; position: fixed; top: 20px; left: 20px; z-index: 1001; background: var(--bg-card); border: none; padding: 12px; border-radius: 8px; box-shadow: var(--shadow-md); cursor: pointer; color: var(--text-primary); font-size: 1.3rem; }
+        
     
-    @media (max-width: 768px) {
-      .sidebar-toggle { display: block; }
-      .sidebar { left: -280px; }
-      .sidebar.active { left: 0; box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3); }
-      .main-content { margin-left: 0; width: 100%; padding: 80px 20px 20px; }
-      .page-title { font-size: 2rem; }
-      .stats-grid { grid-template-columns: 1fr; }
-      .search-box, .admin-info { display: none; }
-    }
+        .status-confirmed { background: rgba(76, 175, 80, 0.1); color: #4CAF50; }
     
-    /* Sections */
-    .dashboard-section { display: none; }
-    .dashboard-section.active { display: block; animation: fadeInUp 0.5s ease; }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-  </style>
-</head>
-<body>
-
-  <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme"><i class="fas fa-moon"></i></button>
-  <button class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
-
-  <div class="dashboard-container">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="sidebar-logo">
-          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%2300A8E8' d='M50 10 L80 30 L80 70 L50 90 L20 70 L20 30 Z'/%3E%3Cpath fill='white' d='M35 40 Q50 35 65 40 L65 60 Q50 65 35 60 Z'/%3E%3C/svg%3E" alt="Logo">
-          <span>Kickshaus</span>
-        </div>
-      </div>
-      <nav class="sidebar-nav">
-        <a class="nav-item active" data-section="overview"><i class="fas fa-chart-line"></i><span>Overview</span></a>
-        <a class="nav-item" data-section="orders"><i class="fas fa-shopping-bag"></i><span>Orders</span></a>
-        <a class="nav-item" data-section="products"><i class="fas fa-box"></i><span>Products</span></a>
-        <a class="nav-item" data-section="customers"><i class="fas fa-users"></i><span>Customers</span></a>
-        <a class="nav-item" data-section="analytics"><i class="fas fa-chart-pie"></i><span>Analytics</span></a>
-        <a class="nav-item" data-section="inventory"><i class="fas fa-warehouse"></i><span>Inventory</span></a>
-        <a class="nav-item" data-section="reviews"><i class="fas fa-star"></i><span>Reviews</span></a>
-        <a class="nav-item" data-section="merchants">
-  <i class="fas fa-store"></i><span>Merchants</span>
-</a>
-        <a class="nav-item" data-section="settings"><i class="fas fa-cog"></i><span>Settings</span></a>
-      </nav>
-      <div class="sidebar-footer">
-        <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
-      </div>
-    </aside>
-
-    <main class="main-content">
-      <div class="top-bar">
-        <h1 class="page-title" id="pageTitle">Overview</h1>
-        <div class="top-actions">
-          <div class="search-box"><i class="fas fa-search"></i><input type="text" placeholder="Search..."></div>
-          <button class="notification-btn"><i class="fas fa-bell"></i><span class="notification-badge">3</span></button>
-          <div class="admin-profile">
-            <div class="admin-avatar">A</div>
-            <div class="admin-info"><div class="admin-name">Admin</div><div class="admin-role">Super Admin</div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- OVERVIEW SECTION -->
-      <div class="dashboard-section active" id="overview-section">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon blue"><i class="fas fa-dollar-sign"></i></div>
-              <div class="stat-trend up"><i class="fas fa-arrow-up"></i>12.5%</div>
+        .status-pending { background: rgba(255, 152, 0, 0.1); color: #FF9800; }
+    
+        .status-failed { background: rgba(244, 67, 54, 0.1); color: #F44336; }
+    
+        
+    
+        .fulfillment-processing { color: var(--primary); }
+    
+        .fulfillment-shipped { color: #9C27B0; }
+    
+        .fulfillment-delivered { color: #4CAF50; }
+    
+    
+    
+        /* Order Details Modal */
+    
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
+    
+        .modal-overlay.active { display: flex; opacity: 1; }
+    
+        .modal-content { background: var(--bg-card); width: 90%; max-width: 700px; border-radius: 16px; padding: 32px; position: relative; max-height: 90vh; overflow-y: auto; transform: translateY(20px); transition: transform 0.3s ease; box-shadow: var(--shadow-lg); border: 1px solid var(--border-color); }
+    
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+    
+        .modal-close { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; }
+    
+        
+    
+        .stepper { display: flex; justify-content: space-between; margin: 30px 0; position: relative; }
+    
+        .stepper::before { content: ''; position: absolute; top: 15px; left: 0; right: 0; height: 2px; background: var(--border-color); z-index: 0; }
+    
+        .step { position: relative; z-index: 1; text-align: center; background: var(--bg-card); padding: 0 10px; width: 25%; }
+    
+        .step-icon { width: 32px; height: 32px; background: var(--border-color); color: var(--text-muted); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-weight: 600; transition: all 0.3s; }
+    
+        .step.active .step-icon { background: var(--primary); color: white; box-shadow: 0 0 0 4px rgba(0, 168, 232, 0.2); }
+    
+        .step.completed .step-icon { background: #4CAF50; color: white; }
+    
+        .step-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+    
+        .step.active .step-label { color: var(--primary); font-weight: 700; }
+    
+        .step.completed .step-label { color: #4CAF50; }
+    
+    
+    
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+    
+        .detail-box { background: var(--bg-primary); padding: 16px; border-radius: 12px; }
+    
+        .detail-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    
+        .detail-value { font-weight: 600; word-break: break-all; }
+    
+        
+    
+        .item-row { display: flex; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border-color); align-items: center; }
+    
+        .item-row:last-child { border-bottom: none; }
+    
+        .item-image { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; background: #eee; }
+    
+        
+    
+        @media (max-width: 768px) {
+    
+          .orders-table { display: block; overflow-x: auto; }
+    
+          .page-title { font-size: 2rem; }
+    
+          .detail-grid { grid-template-columns: 1fr; }
+    
+          .stepper { overflow-x: auto; padding-bottom: 10px; }
+    
+          .step { min-width: 80px; }
+    
+        }
+    
+      </style>
+    
+    </head>
+    
+    <body>
+    
+    
+    
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme"><i class="fas fa-moon"></i></button>
+    
+    
+    
+      <!-- Header -->
+    
+      <header class="header">
+    
+        <div class="container">
+    
+          <nav class="nav">
+    
+            <a href="index.html" class="nav-logo">
+    
+              <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%2300A8E8' d='M50 10 L80 30 L80 70 L50 90 L20 70 L20 30 Z'/%3E%3Cpath fill='white' d='M35 40 Q50 35 65 40 L65 60 Q50 65 35 60 Z'/%3E%3C/svg%3E" alt="Kickshaus Logo">
+    
+            </a>
+    
+            <div class="nav-actions">
+    
+               <a href="cart.html" class="icon-btn"><i class="fas fa-shopping-cart"></i></a>
+    
             </div>
-            <div class="stat-value">₦12.5M</div>
-            <div class="stat-label">Total Revenue</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon green"><i class="fas fa-shopping-cart"></i></div>
-              <div class="stat-trend up"><i class="fas fa-arrow-up"></i>8.3%</div>
-            </div>
-            <div class="stat-value">1,284</div>
-            <div class="stat-label">Total Orders</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon orange"><i class="fas fa-users"></i></div>
-              <div class="stat-trend up"><i class="fas fa-arrow-up"></i>15.2%</div>
-            </div>
-            <div class="stat-value">8,429</div>
-            <div class="stat-label">Total Customers</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon purple"><i class="fas fa-box"></i></div>
-              <div class="stat-trend down"><i class="fas fa-arrow-down"></i>3.1%</div>
-            </div>
-            <div class="stat-value">234</div>
-            <div class="stat-label">Products</div>
-          </div>
+    
+          </nav>
+    
         </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">Recent Orders</h2>
-            <a class="card-action" onclick="showSection('orders')">View All</a>
+    
+      </header>
+    
+    
+    
+      <main class="dashboard-container">
+    
+        <div class="dashboard-header">
+    
+          <div>
+    
+            <h1 class="page-title">My Account</h1>
+    
+            <p class="text-muted" id="userEmail">Loading...</p>
+    
           </div>
-          <div class="table-container">
-            <table>
-              <thead><tr><th>Order ID</th><th>Customer</th><th>Product</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
-              <tbody>
-                <tr><td><strong>#ORD-001</strong></td><td>John Doe</td><td>Premium Leather Loafer</td><td><strong>₦180,000</strong></td><td><span class="status-badge completed">Completed</span></td><td>Dec 30, 2025</td></tr>
-                <tr><td><strong>#ORD-002</strong></td><td>Jane Smith</td><td>Urban Street Sneaker</td><td><strong>₦145,000</strong></td><td><span class="status-badge processing">Processing</span></td><td>Dec 30, 2025</td></tr>
-                <tr><td><strong>#ORD-003</strong></td><td>Mike Johnson</td><td>Executive Oxford Shoe</td><td><strong>₦195,000</strong></td><td><span class="status-badge pending">Pending</span></td><td>Dec 29, 2025</td></tr>
-              </tbody>
-            </table>
-          </div>
+    
+          <button class="logout-btn" onclick="logout()">Logout</button>
+    
         </div>
+    
+    
+    
+        <div class="section-card">
+    
+          <h2 class="section-title">Order History</h2>
+    
+          <table class="orders-table">
+    
+            <thead>
+    
+              <tr>
+    
+                <th>Order ID</th>
+    
+                <th>Date</th>
+    
+                <th>Amount</th>
+    
+                <th>Payment</th>
+    
+                <th>Status</th>
+    
+                <th>Actions</th>
+    
+              </tr>
+    
+            </thead>
+    
+            <tbody id="ordersBody">
+    
+              <tr><td colspan="6" style="text-align:center">Loading orders...</td></tr>
+    
+            </tbody>
+    
+          </table>
+    
+        </div>
+    
+      </main>
+    
+    
+    
+      <!-- Order Detail Modal -->
+    
+      <div class="modal-overlay" id="orderModal">
+    
+        <div class="modal-content">
+    
+          <button class="modal-close" onclick="closeModal()">&times;</button>
+    
+          <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 8px;">Order Details</h2>
+    
+          <p style="color: var(--text-muted); margin-bottom: 24px;" id="modalOrderId">#...</p>
+    
+    
+    
+          <!-- Status Stepper -->
+    
+          <div class="stepper" id="orderStepper">
+    
+            <!-- Steps injected via JS -->
+    
+          </div>
+    
+    
+    
+          <div class="detail-grid">
+    
+            <div class="detail-box">
+    
+              <div class="detail-label">Shipping Address</div>
+    
+              <div class="detail-value" id="modalAddress">Loading...</div>
+    
+            </div>
+    
+            <div class="detail-box">
+    
+              <div class="detail-label">Payment Info</div>
+    
+              <div class="detail-value">
+    
+                <div id="modalPaymentStatus" style="margin-bottom: 4px;">Pending</div>
+    
+                <div id="modalTxHash" style="font-size: 0.8rem; color: var(--primary);"></div>
+    
+              </div>
+    
+            </div>
+    
+          </div>
+    
+    
+    
+          <div class="section-title" style="font-size: 1.1rem; margin-bottom: 16px;">Items Ordered</div>
+    
+          <div id="modalItems">
+    
+            <!-- Items injected via JS -->
+    
+          </div>
+    
+        </div>
+    
       </div>
+    
+    
+    
+      <script src="public/js/api.js?v=2"></script>
+    
+      <script src="public/js/global-state.js?v=2"></script>
+    
+      <script src="public/js/api-client.js?v=2"></script>
+    
+      <script src="public/js/script.js?v=2"></script>
+    
+      <script>
+    
+        console.log('Dashboard v2 loaded');
+    
+    
+    
+        document.addEventListener('DOMContentLoaded', async () => {
+    
+          const token = localStorage.getItem('token');
+    
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    
+    
+          if (!token) {
+    
+            window.location.href = 'login.html';
+    
+            return;
+    
+          }
+    
+    
+    
+          document.getElementById('userEmail').textContent = user.email || 'Welcome back';
+    
+    
+    
+          await loadOrders();
+    
+        });
+    
+    
+    
+        async function loadOrders() {
+    
+          const tbody = document.getElementById('ordersBody');
+    
+          try {
+    
+            console.log('Fetching orders...');
+    
+            const res = await api.getOrders();
+    
+            console.log('Orders response:', res);
+    
+            
+    
+            if (!res.success) {
+    
+              throw new Error(res.error || 'Failed to fetch orders');
+    
+            }
+    
+    
+    
+            const { data } = res;
+    
+            
+    
+            if (!data || !data.orders) {
+    
+              console.warn('No orders data received:', data);
+    
+              tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">No orders found.</td></tr>';
+    
+              return;
+    
+            }
+    
+    
+    
+            const orders = data.orders;
+    
+    
+    
+            if (!Array.isArray(orders) || orders.length === 0) {
+    
+              tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 30px;">No orders found for this account. <a href="index.html" style="color:var(--primary); text-decoration:underline;">Start Shopping</a></td></tr>';
+    
+              return;
+    
+            }
+    
+    
+    
+            tbody.innerHTML = orders.map(order => `
+    
+              <tr>
+    
+                <td style="font-family:monospace; color:var(--primary)">#${(order.id || 'N/A').slice(0, 8)}</td>
+    
+                <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}</td>
+    
+                <td>₦${(order.total_amount_fiat || 0).toLocaleString()}</td>
+    
+                <td><span class="status-badge status-${order.payment_status || 'pending'}">${order.payment_status || 'Pending'}</span></td>
+    
+                <td class="fulfillment-${order.fulfillment_status || 'pending'}">
+    
+                  ${(order.fulfillment_status || 'Pending').charAt(0).toUpperCase() + (order.fulfillment_status || 'pending').slice(1)}
+    
+                </td>
+    
+                <td>
+                  <button class="btn-icon" style="background:var(--bg-primary); border:1px solid var(--border-color); padding:6px 12px; border-radius:8px; cursor:pointer;" onclick="viewOrder('${order.id}')">
+                    <i class="fas fa-eye" style="color:var(--text-secondary)"></i> View
+                  </button>
+                  ${(order.payment_status === 'pending' && order.reference_key) ? 
+                    `<button class="btn-icon" style="margin-left:5px; background:var(--bg-primary); border:1px solid var(--accent); color:var(--accent); padding:6px 12px; border-radius:8px; cursor:pointer;" onclick="reverifyPayment('${order.reference_key}')">Verify</button>` 
+                    : ''}
+                </td>
+              </tr>
+            `).join('');
+          } catch (error) {
+            console.error('Error loading orders:', error);
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red; padding: 20px;">Error loading orders: ${error.message}. Please try refreshing.</td></tr>`;
+          }
+        }
 
-      <!-- OTHER SECTIONS (Populated by JS) -->
-      <div class="dashboard-section" id="orders-section"></div>
-      <div class="dashboard-section" id="products-section"></div>
-      <div class="dashboard-section" id="customers-section"></div>
-      <div class="dashboard-section" id="analytics-section"></div>
-      <div class="dashboard-section" id="inventory-section"></div>
-      <div class="dashboard-section" id="reviews-section"></div>
-      <div class="dashboard-section" id="merchants-section"></div>
-      <div class="dashboard-section" id="settings-section"></div>
-    </main>
-  </div>
+        async function reverifyPayment(reference) {
+             if (!reference) return;
+             
+             // Check if it matches our custom reference format for Paystack (or simple regex)
+             // Paystack references we generate start with KICK- or TEST-
+             const isPaystack = reference.includes('KICK-') || reference.includes('TEST-');
+             
+             showToast('Verifying payment status...', 'info');
+             
+             try {
+                 let res;
+                 if (isPaystack) {
+                     res = await api.verifyPaystack(reference);
+                 } else {
+                     res = await api.verifyPayment(reference);
+                 }
+                 
+                 if (res.success && (res.data.status === 'confirmed' || res.data.status === 'success')) {
+                     showToast('Payment confirmed! Refreshing...', 'success');
+                     setTimeout(loadOrders, 1500);
+                 } else {
+                     const status = res.data ? res.data.status : 'Unknown';
+                     if (status === 'confirmed') {
+                        showToast('Payment confirmed! Refreshing...', 'success');
+                        setTimeout(loadOrders, 1500);
+                     } else {
+                        showToast('Payment verification returned: ' + status, 'warning');
+                     }
+                 }
+             } catch(e) {
+                 console.error(e);
+                 showToast('Verification failed: ' + (e.message || 'Network error'), 'error');
+             }
+        }
+    
+    
+        // Modal Functions
+    
+        const modal = document.getElementById('orderModal');
+    
+        
+    
+        function closeModal() {
+    
+          modal.classList.remove('active');
+    
+          document.body.style.overflow = '';
+    
+        }
+    
+    
+    
+        window.onclick = function(event) {
+    
+          if (event.target == modal) {
+    
+            closeModal();
+    
+          }
+    
+        }
+    
+    
+    
+        async function viewOrder(orderId) {
+    
+          try {
+    
+            // Show modal with loading state
+    
+            modal.classList.add('active');
+    
+            document.body.style.overflow = 'hidden';
+    
+            document.getElementById('modalItems').innerHTML = '<p style="text-align:center; padding:20px;">Loading order details...</p>';
+    
+            
+    
+            // Fetch order details
+    
+            const res = await api.getOrder(orderId);
+    
+            if (!res.success || !res.data.order) throw new Error('Failed to load order details');
+    
+            
+    
+            const order = res.data.order;
+    
+            
+    
+            // Populate Modal
+    
+            document.getElementById('modalOrderId').textContent = `Order #${order.id}`;
+    
+            
+    
+            // Address
+    
+            const addressParts = [
+    
+              order.contact_name,
+    
+              order.shipping_address,
+    
+              order.city,
+    
+              order.state,
+    
+              order.sender_phone
+    
+            ].filter(Boolean);
+    
+            document.getElementById('modalAddress').innerHTML = addressParts.length > 0 
+    
+              ? addressParts.join('<br>') 
+    
+              : '<i>No shipping address provided</i>';
+    
+    
+    
+            // Payment Info
+    
+            document.getElementById('modalPaymentStatus').innerHTML = `<span class="status-badge status-${order.payment_status}">${order.payment_status}</span>`;
+    
+            
+    
+            const txSig = order.transaction_signature;
+            if (txSig && txSig.length > 10) {
+                const isPaystack = txSig.startsWith('KICK-') || txSig.startsWith('TEST-');
+                
+                if (isPaystack) {
+                    // Paystack Reference
+                    document.getElementById('modalTxHash').innerHTML = `
+                        <div style="display:flex; align-items:center; gap:6px; color:var(--text-secondary); margin-top:4px;">
+                            <i class="fas fa-receipt"></i> Paystack Reference
+                        </div>
+                        <div style="font-family:monospace; font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${txSig}</div>
+                    `;
+                } else {
+                    // Solana Signature
+                    const shortHash = `${txSig.slice(0, 8)}...${txSig.slice(-8)}`;
+                    const explorerUrl = api.getSolanaExplorerUrl(txSig);
 
-  <script src="global-state.js"></script>
-  <script src="admin-auth.js"></script>
-  <script src="universal-theme.js"></script>
-  <script src="dashboard-functions.js"></script>
-</body>
-</html>
+                    document.getElementById('modalTxHash').innerHTML = `
+                        <a href="${explorerUrl}" target="_blank" style="display:flex; align-items:center; gap:6px; color:var(--primary); text-decoration:none; margin-top:4px;">
+                            <i class="fas fa-external-link-alt"></i> Verify on Blockchain
+                        </a>
+                        <div style="font-family:monospace; font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Ref: ${shortHash}</div>
+                    `;
+                }
+            } else {
+                document.getElementById('modalTxHash').textContent = 'Transaction ID: Pending/N/A';
+            }
+    
+    
+    
+            // Stepper
+    
+            renderStepper(order.fulfillment_status || 'pending');
+    
+    
+    
+            // Items
+    
+            const itemsHtml = (order.items || []).map(item => {
+    
+               // Find product image from DB logic or placeholder
+    
+               const img = (item.products && item.products.images && item.products.images[0]) 
+    
+                 ? item.products.images[0] 
+    
+                 : 'https://via.placeholder.com/60';
+    
+               
+    
+               const name = item.products ? item.products.name : 'Unknown Product';
+    
+               
+    
+               return `
+    
+                <div class="item-row">
+    
+                  <img src="${img}" alt="${name}" class="item-image">
+    
+                  <div style="flex:1;">
+    
+                    <div style="font-weight:600; color:var(--text-primary);">${name}</div>
+    
+                    <div style="font-size:0.85rem; color:var(--text-muted);">Qty: ${item.quantity}</div>
+    
+                  </div>
+    
+                  <div style="font-weight:600;">₦${(item.price_at_purchase * item.quantity).toLocaleString()}</div>
+    
+                </div>
+    
+               `;
+    
+            }).join('');
+    
+            
+    
+            document.getElementById('modalItems').innerHTML = itemsHtml || '<p>No items found.</p>';
+    
+    
+    
+          } catch (error) {
+    
+            console.error(error);
+    
+            document.getElementById('modalItems').innerHTML = '<p style="color:red; text-align:center;">Failed to load details.</p>';
+    
+          }
+    
+        }
+    
+    
+    
+        function renderStepper(status) {
+    
+            const steps = ['pending', 'processing', 'shipped', 'delivered'];
+    
+            const labels = ['Placed', 'Processing', 'Shipped', 'Delivered'];
+    
+            const icons = ['fa-check', 'fa-cog', 'fa-shipping-fast', 'fa-home'];
+    
+            
+    
+            const currentIdx = steps.indexOf(status.toLowerCase());
+    
+            
+    
+            const html = steps.map((step, idx) => {
+    
+                let className = 'step';
+    
+                if (idx < currentIdx) className += ' completed';
+    
+                if (idx === currentIdx) className += ' active';
+    
+                
+    
+                return `
+    
+                    <div class="${className}">
+    
+                        <div class="step-icon"><i class="fas ${icons[idx]}"></i></div>
+    
+                        <div class="step-label">${labels[idx]}</div>
+    
+                    </div>
+    
+                `;
+    
+            }).join('');
+    
+            
+    
+            document.getElementById('orderStepper').innerHTML = html;
+    
+        }
+    
+    
+    
+        function logout() {
+    
+          localStorage.clear();
+    
+          window.location.href = 'login.html';
+    
+        }
+    
+      </script>
+    
+    </body>
+    
+    </html>

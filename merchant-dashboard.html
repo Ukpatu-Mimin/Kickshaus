@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Merchant Dashboard - Kickshaus</title>
   
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="mobile-dark-mode.css">
+  <link rel="stylesheet" href="public/css/style.css">
+  <link rel="stylesheet" href="public/css/mobile-dark-mode.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   
@@ -59,8 +59,8 @@
     td { padding: 16px 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
     tr:hover { background: var(--bg-primary); }
     .status-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
-    .status-badge.pending { background: rgba(255, 152, 0, 0.1); color: #FF9800; }
-    .status-badge.approved { background: rgba(76, 175, 80, 0.1); color: #4CAF50; }
+    .status-badge.pending_approval { background: rgba(255, 152, 0, 0.1); color: #FF9800; }
+    .status-badge.live { background: rgba(76, 175, 80, 0.1); color: #4CAF50; }
     .status-badge.rejected { background: rgba(244, 67, 54, 0.1); color: #F44336; }
     
     /* Buttons */
@@ -75,13 +75,6 @@
     .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary); }
     .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary); font-family: 'Poppins', sans-serif; }
     .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0, 168, 232, 0.1); }
-    
-    /* Image Upload */
-    .image-upload-container { display: flex; gap: 12px; flex-wrap: wrap; }
-    .image-preview { position: relative; width: 100px; height: 100px; border: 2px dashed var(--border-color); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; }
-    .image-preview:hover { border-color: var(--primary); }
-    .image-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
-    .image-preview .remove-image { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.8rem; }
     
     /* Mobile */
     .sidebar-toggle { display: none; position: fixed; top: 20px; left: 20px; z-index: 1001; background: var(--bg-card); border: none; padding: 12px; border-radius: 8px; box-shadow: var(--shadow-md); cursor: pointer; color: var(--text-primary); font-size: 1.3rem; }
@@ -118,7 +111,7 @@
         <a class="nav-item active" data-section="overview"><i class="fas fa-chart-line"></i><span>Overview</span></a>
         <a class="nav-item" data-section="add-product"><i class="fas fa-plus-circle"></i><span>Add Product</span></a>
         <a class="nav-item" data-section="my-products"><i class="fas fa-box"></i><span>My Products</span></a>
-        <a class="nav-item" data-section="settings"><i class="fas fa-cog"></i><span>Settings</span></a>
+        <a class="nav-item" data-section="orders"><i class="fas fa-shopping-bag"></i><span>Orders</span></a>
       </nav>
       <div class="sidebar-footer">
         <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
@@ -138,22 +131,118 @@
       </div>
 
       <!-- OVERVIEW SECTION -->
-      <div class="dashboard-section active" id="overview-section"></div>
+      <div class="dashboard-section active" id="overview-section">
+        <div class="stats-grid">
+           <div class="stat-card">
+            <div class="stat-icon blue"><i class="fas fa-box"></i></div>
+            <div class="stat-value" id="totalProducts">0</div>
+            <div class="stat-label">Total Products</div>
+           </div>
+        </div>
+      </div>
 
       <!-- ADD PRODUCT SECTION -->
-      <div class="dashboard-section" id="add-product-section"></div>
+      <div class="dashboard-section" id="add-product-section">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Add New Product</h2>
+          </div>
+          <form id="addProductForm">
+            <div class="form-group">
+              <label for="pName">Product Name</label>
+              <input type="text" id="pName" required placeholder="e.g. Nike Air Max">
+            </div>
+            <div class="form-group">
+              <label for="pCategory">Category</label>
+              <select id="pCategory" required>
+                <option value="">Select Category</option>
+                <option value="Running">Running</option>
+                <option value="Formal">Formal</option>
+                <option value="Casual">Casual</option>
+                <option value="Lifestyle">Lifestyle</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pPrice">Price (₦)</label>
+              <input type="number" id="pPrice" required min="1" placeholder="e.g. 50000">
+            </div>
+            <div class="form-group">
+              <label for="pStock">Stock Quantity</label>
+              <input type="number" id="pStock" required min="1" placeholder="e.g. 10">
+            </div>
+            <div class="form-group">
+              <label for="pDesc">Description</label>
+              <textarea id="pDesc" rows="4" placeholder="Product description..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="pImage">Main Image URL</label>
+              <input type="url" id="pImage" required placeholder="https://example.com/image.png">
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">(Use a direct image link)</p>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Create Product</button>
+          </form>
+        </div>
+      </div>
 
       <!-- MY PRODUCTS SECTION -->
-      <div class="dashboard-section" id="my-products-section"></div>
+      <div class="dashboard-section" id="my-products-section">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">My Products</h2>
+            <button class="btn btn-primary" onclick="document.querySelector('[data-section=\'add-product\']').click()">+ Add New</button>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="productsTable">
+                <!-- Loaded by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
-      <!-- SETTINGS SECTION -->
-      <div class="dashboard-section" id="settings-section"></div>
+      <!-- ORDERS SECTION -->
+      <div class="dashboard-section" id="orders-section">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Orders for My Products</h2>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Items Bought</th>
+                  <th>Total Amount</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="merchantOrdersTable">
+                <!-- Loaded by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 
-  <script src="global-state.js"></script>
-  <script src="merchant-auth.js"></script>
-  <script src="universal-theme.js"></script>
-  <script src="merchant-dashboard-functions.js"></script>
+  <script src="public/js/api.js"></script>
+  <script src="public/js/global-state.js"></script>
+  <script src="public/js/api-client.js"></script>
+  <script src="public/js/universal-theme.js"></script>
+  <script src="public/js/merchant-dashboard-functions.js"></script>
 </body>
 </html>

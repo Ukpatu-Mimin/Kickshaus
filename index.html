@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kickshaus - Elevate Your Style</title>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="landing-page-enhancements.css" />
+    <link rel="stylesheet" href="public/css/style.css" />
+    <link rel="stylesheet" href="public/css/landing-page-enhancements.css" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
@@ -98,7 +98,7 @@
           <div class="hero-image">
             <div class="shoe-container">
               <img
-                src="images/ChatGPT Image Dec 2, 2025, 10_51_42 PM.png"
+                src="images/hero-shoe-1.png"
                 alt="Nike React Infinity Run"
                 class="hero-shoe"
               />
@@ -171,7 +171,7 @@
         <div class="promo-image-wrapper">
           <!-- Replace this src with your actual CTA banner image -->
           <img
-            src="images/326297053_11365005-removebg-preview.png"
+            src="images/promo-banner.png"
             alt="Sneakers Promo - 50% Discount"
             class="promo-banner-img"
           />
@@ -255,6 +255,9 @@
   </p>
   <a href="become-merchant.html" class="btn" style="display: inline-flex; align-items: center; gap: 10px; padding: 16px 32px; background: white; color: var(--primary); border-radius: 8px; font-weight: 600; text-decoration: none;">
     Become a Merchant <i class="fas fa-arrow-right"></i>
+  </a>
+  <a href="merchant-login.html" class="btn" style="display: inline-flex; align-items: center; gap: 10px; padding: 16px 32px; background: transparent; color: white; border: 2px solid white; border-radius: 8px; font-weight: 600; text-decoration: none; margin-left: 10px;">
+    Merchant Login <i class="fas fa-sign-in-alt"></i>
   </a>
 </section>
 
@@ -349,8 +352,10 @@
       <i class="fas fa-arrow-up"></i>
     </button>
 
-    <!-- IMPORTANT: Load global-state.js FIRST, then script.js -->
-    <script src="global-state.js"></script>
-    <script src="script.js"></script>
+    <!-- IMPORTANT: Load js/api.js FIRST, then global-state.js, then api-client.js, then script.js -->
+    <script src="public/js/api.js"></script>
+    <script src="public/js/global-state.js"></script>
+    <script src="public/js/api-client.js"></script>
+    <script src="public/js/script.js"></script>
   </body>
 </html>

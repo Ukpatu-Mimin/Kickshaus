@@ -52,6 +52,23 @@ const KickshausState = {
     return this.favorites.some(item => item.id === productId);
   },
   
+  // Helper to extract image URL from various formats
+  getProductImage(product) {
+    // Direct image property
+    if (product.image && typeof product.image === 'string') {
+      return product.image;
+    }
+    // Images as array
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      return product.images[0];
+    }
+    // Images as object
+    if (product.images && typeof product.images === 'object') {
+      return product.images.main || product.images.primary || '';
+    }
+    return '';
+  },
+  
   // Add to cart
   addToCart(product) {
     const existingItem = this.cart.find(item => 
@@ -63,11 +80,14 @@ const KickshausState = {
     if (existingItem) {
       existingItem.quantity++;
     } else {
+      // Ensure price is a valid number
+      const price = Number(product.price) || Number(product.base_price) || 0;
+      
       this.cart.push({
         id: product.id,
         name: product.name,
-        price: product.price,
-        image: product.image,
+        price: price,
+        image: this.getProductImage(product),
         size: product.size || 'N/A',
         color: product.color || 'N/A',
         quantity: 1
@@ -104,7 +124,7 @@ const KickshausState = {
   
   // Get cart total
   getCartTotal() {
-    return this.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return this.cart.reduce((total, item) => total + ((Number(item.price) || 0) * (item.quantity || 1)), 0);
   },
   
   // Get cart item count
@@ -130,86 +150,96 @@ const KickshausState = {
   }
 };
 
-// ===== PRODUCT DATABASE =====
-const PRODUCTS_DATABASE = [
-  {
-    id: 'precious-001',
-    name: 'Precious Footwear',
-    brand: 'Kickshaus',
-    category: 'dress',
-    price: 180000,
-    description: 'NIGERIAN LUXURY SHOES - Premium handcrafted footwear made with the finest materials.',
-    images: [
-      'https://images.unsplash.com/photo-1614252232199-5d1c2e7d4a0a?w=1200&q=90',
-      'https://images.unsplash.com/photo-1605733513502-9e425a13d08f?w=1200&q=90',
-      'https://images.unsplash.com/photo-1605733160316-4fc7dac6d16d?w=1200&q=90'
-    ],
-    badge: 'new',
-    stock: 48,
-    rating: 5.0,
-    sizes: ['40', '41', '42', '43', '44', '45'],
-    colors: ['brown', 'black', 'oxblood']
-  },
-  {
-    id: 1,
-    name: 'Nike Sneakers',
-    brand: 'Nike',
-    category: 'Fashion',
-    price: 1550,
-    description: 'Classic Nike sneakers with superior comfort and style.',
-    images: [
-      'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500&q=80',
-      'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=500&q=80',
-      'https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?w=500&q=80'
-    ],
-    badge: 'new',
-    stock: 25,
-    rating: 4.5,
-    sizes: ['40', '41', '42', '43', '44'],
-    colors: ['white', 'black', 'blue']
-  },
-  {
-    id: 2,
-    name: 'Adforce Pumps',
-    brand: 'Adidas',
-    category: 'Fashion',
-    price: 2250,
-    description: 'Elegant pumps perfect for any formal occasion.',
-    images: [
-      'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500&q=80',
-      'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=500&q=80',
-      'https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?w=500&q=80'
-    ],
-    badge: null,
-    stock: 15,
-    rating: 4.8,
-    sizes: ['39', '40', '41', '42'],
-    colors: ['red', 'black', 'nude']
-  },
-  {
-    id: 3,
-    name: "Puma's Revenge",
-    brand: 'Puma',
-    category: 'Fashion',
-    price: 1850,
-    description: 'Sporty and stylish Puma shoes for everyday wear.',
-    images: [
-      'https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?w=500&q=80',
-      'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=500&q=80',
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&q=80'
-    ],
-    badge: 'bestseller',
-    stock: 30,
-    rating: 4.7,
-    sizes: ['40', '41', '42', '43', '44', '45'],
-    colors: ['white', 'black', 'grey']
-  }
-];
+// ===== PRODUCT DATABASE (CACHE) =====
+// Products are now fetched from the API. This serves as a cache/fallback.
+let PRODUCTS_DATABASE = [];
 
-// Get product by ID
+/**
+ * Load products from the API
+ * @returns {Promise<Array>} Array of products
+ */
+async function loadProductsFromAPI() {
+  try {
+    // Use the api object from js/api.js or KickshausAPI from api-client.js
+    const apiClient = window.api || window.KickshausAPI;
+    if (!apiClient) {
+      console.warn('API client not available, using cached products');
+      return PRODUCTS_DATABASE;
+    }
+
+    const response = await apiClient.getProducts();
+    if (response.success && response.data) {
+      // Handle both response formats: { data: { products: [...] } } or { data: [...] }
+      const products = response.data.products || response.data;
+      if (Array.isArray(products)) {
+        PRODUCTS_DATABASE = products.map(p => ({
+          id: p.id,
+          name: p.name,
+          brand: p.brand || 'Kickshaus',
+          category: p.category,
+          price: p.final_price || p.base_price || p.price,
+          description: p.description,
+          images: p.images ? (Array.isArray(p.images) ? p.images : [p.images.main, p.images.primary, p.images.top, p.images.left, p.images.right].filter(Boolean)) : [],
+          badge: p.badge || null,
+          stock: p.stock || 0,
+          rating: p.rating || 4.5,
+          sizes: p.sizes || ['40', '41', '42', '43', '44'],
+          colors: p.colors || ['black', 'white']
+        }));
+        console.log(`✨ Loaded ${PRODUCTS_DATABASE.length} products from API`);
+      }
+    }
+    return PRODUCTS_DATABASE;
+  } catch (error) {
+    console.error('Failed to load products from API:', error);
+    showToast('Could not load products from server', 'error');
+    return PRODUCTS_DATABASE;
+  }
+}
+
+// Get product by ID (checks cache first, then fetches from API if needed)
 function getProductById(id) {
   // Convert id to string for comparison since some IDs might be numbers or strings
   return PRODUCTS_DATABASE.find(p => String(p.id) === String(id));
+}
+
+/**
+ * Get product by ID from API
+ * @param {string} id - Product ID
+ * @returns {Promise<Object|null>} Product or null
+ */
+async function getProductByIdAsync(id) {
+  // First check cache
+  const cached = getProductById(id);
+  if (cached) return cached;
+
+  // Fetch from API
+  try {
+    const apiClient = window.api || window.KickshausAPI;
+    if (!apiClient) return null;
+
+    const response = await apiClient.getProduct(id);
+    if (response.success && response.data) {
+      const p = response.data;
+      return {
+        id: p.id,
+        name: p.name,
+        brand: p.brand || 'Kickshaus',
+        category: p.category,
+        price: p.final_price || p.base_price || p.price,
+        description: p.description,
+        images: p.images ? (Array.isArray(p.images) ? p.images : [p.images.main, p.images.primary, p.images.top, p.images.left, p.images.right].filter(Boolean)) : [],
+        badge: p.badge || null,
+        stock: p.stock || 0,
+        rating: p.rating || 4.5,
+        sizes: p.sizes || ['40', '41', '42', '43', '44'],
+        colors: p.colors || ['black', 'white']
+      };
+    }
+  } catch (error) {
+    console.error('Failed to fetch product:', error);
+  }
+  return null;
 }
 
 // ===== UTILITY FUNCTIONS =====
@@ -230,7 +260,7 @@ function showToast(message, type = 'success') {
     font-weight: 600;
     font-family: 'Poppins', sans-serif;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    z-index: 10000;
+    z-index: 20000;
     transition: transform 0.3s ease;
     max-width: 90%;
     text-align: center;
@@ -332,7 +362,20 @@ document.addEventListener('DOMContentLoaded', () => {
   userIcons.forEach(icon => {
     icon.addEventListener('click', (e) => {
       e.preventDefault();
-      window.location.href = 'login.html';
+      // Check if KickshausAPI is available and user is authenticated
+      if (typeof KickshausAPI !== 'undefined' && KickshausAPI.isAuthenticated()) {
+        const user = KickshausAPI.getUser();
+        if (user && user.type === 'merchant') {
+          window.location.href = 'merchant-dashboard.html';
+        } else if (user && user.type === 'admin') {
+          window.location.href = 'admin-dashboard.html';
+        } else {
+          // Regular user - redirect to customer dashboard
+          window.location.href = 'dashboard.html';
+        }
+      } else {
+        window.location.href = 'login.html';
+      }
     });
   });
   

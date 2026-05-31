@@ -5,9 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Payment Options - Kickshaus</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="public/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
+  <!-- Frontend only renders QR from backend-provided URL -->
+  <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+  <script src="https://unpkg.com/@solana/spl-token@0.4.6/lib/index.iife.js"></script>
 
   <style>
     /* Payment page specific styles */
@@ -183,71 +189,174 @@
         font-size: 1.5rem;
       }
     }
+
+    /* Solana Pay Modal Styles */
+    .solana-pay-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10001;
+      padding: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .solana-pay-content {
+      background: var(--bg-card, white);
+      padding: 40px;
+      border-radius: 24px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.4s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .solana-pay-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .solana-pay-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary, #1A1A1A);
+    }
+
+    .solana-pay-close {
+      font-size: 2rem;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-muted, #999);
+      transition: color 0.3s ease;
+    }
+
+    .solana-pay-close:hover {
+      color: var(--text-primary, #1A1A1A);
+    }
+
+    .solana-pay-qr {
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      margin-bottom: 24px;
+      display: inline-block;
+    }
+
+    .solana-pay-qr canvas {
+      display: block;
+    }
+
+    .solana-pay-amount {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary, #00A8E8);
+      margin-bottom: 8px;
+    }
+
+    .solana-pay-note {
+      font-size: 0.9rem;
+      color: var(--text-muted, #999);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .solana-pay-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px;
+      background: rgba(0, 168, 232, 0.1);
+      border-radius: 12px;
+      color: var(--primary, #00A8E8);
+      font-weight: 600;
+    }
+
+    .solana-pay-spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(0, 168, 232, 0.3);
+      border-top-color: var(--primary, #00A8E8);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .solana-pay-wallet-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .solana-pay-wallet-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(153, 69, 255, 0.4);
+    }
+
+    .payment-error-banner {
+      display: none;
+      background: rgba(244, 67, 54, 0.1);
+      border: 1px solid #F44336;
+      color: #B71C1C;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
 
-  <!-- THEME TOGGLE -->
   <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
     <i class="fas fa-moon"></i>
   </button>
 
-  <!-- HEADER -->
-  <!-- <header class="header">
-    <div class="container">
-      <nav class="nav">
-        <div class="nav-logo">
-          <a href="index.html">
-            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%2300A8E8' d='M50 10 L80 30 L80 70 L50 90 L20 70 L20 30 Z'/%3E%3Cpath fill='white' d='M35 40 Q50 35 65 40 L65 60 Q50 65 35 60 Z'/%3E%3C/svg%3E" alt="Kickshaus Logo">
-          </a>
-        </div>
-
-        <ul class="nav-menu">
-          <li><a href="index.html" class="nav-link">Home</a></li>
-          <li><a href="index.html#products" class="nav-link">Products</a></li>
-          <li><a href="index.html#featured" class="nav-link">Featured</a></li>
-          <li><a href="collection.html" class="nav-link">Collections</a></li>
-        </ul>
-
-        <div class="nav-actions">
-          <button class="icon-btn" aria-label="Search">
-            <i class="fas fa-search"></i>
-          </button>
-          <a href="favourites.html" class="icon-btn heart-btn" aria-label="Favorites">
-            <i class="fas fa-heart"></i>
-            <span class="badge badge-favorites">0</span>
-          </a>
-          <a href="cart.html" class="icon-btn cart-btn" aria-label="Cart">
-            <i class="fas fa-shopping-cart"></i>
-            <span class="badge badge-cart">0</span>
-          </a>
-          <a href="login.html" class="icon-btn account-btn" aria-label="Account">
-            <i class="fas fa-user"></i>
-          </a>
-          <button class="mobile-menu-toggle" aria-label="Menu">
-            <i class="fas fa-bars"></i>
-          </button>
-        </div>
-      </nav>
-    </div>
-  </header> -->
-
-  <!-- MAIN CONTENT -->
   <main class="payment-page-container">
     <div class="container" style="max-width: 900px;">
       
-      <!-- Back Button -->
       <a href="javascript:history.back()" class="back-link" style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: 32px; color: var(--text-secondary); text-decoration: none; font-weight: 500;">
         <i class="fas fa-arrow-left"></i> Back
       </a>
 
-      <!-- Page Header -->
       <div class="payment-header">
         <h1 class="payment-title">Payment Options</h1>
         <p class="payment-subtitle">Choose your preferred payment method</p>
       </div>
 
-      <!-- Order Summary -->
+      <div id="paymentErrorBanner" class="payment-error-banner"></div>
+
       <div class="order-summary-card">
         <h3>Order Summary</h3>
         <div class="order-detail">
@@ -268,7 +377,6 @@
         </div>
       </div>
 
-      <!-- Payment Methods -->
       <div class="payment-methods">
         <div class="payment-option" data-method="card">
           <div class="method-left">
@@ -290,12 +398,12 @@
           <i class="fas fa-chevron-right arrow"></i>
         </div>
 
-        <div class="payment-option" data-method="paypal">
+        <div class="payment-option" data-method="paystack">
           <div class="method-left">
             <div class="icon-box">
-              <i class="fab fa-paypal"></i>
+              <i class="fas fa-money-bill-wave"></i>
             </div>
-            <span class="method-name">PayPal</span>
+            <span class="method-name">Paystack</span>
           </div>
           <i class="fas fa-chevron-right arrow"></i>
         </div>
@@ -311,99 +419,629 @@
         </div>
       </div>
 
-      <!-- Trust Badges -->
       <div class="trust-badges">
         <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" alt="Visa" class="trust-badge">
         <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/Mastercard-logo.png" alt="Mastercard" class="trust-badge">
-        <img src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/paypal-logo-large.png" alt="PayPal" class="trust-badge">
+        <img src="https://website-v3-assets.s3.amazonaws.com/assets/img/hero/Paystack-mark-white-twitter.png" style="background: #000; padding: 4px; border-radius: 4px;" alt="Paystack" class="trust-badge">
         <div style="display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.9rem;">
           <i class="fas fa-lock"></i>
           <span>Secure Payment</span>
         </div>
       </div>
 
+      <div style="text-align: center; margin-top: 40px;">
+        <a href="index.html" class="btn btn-secondary" style="padding: 12px 24px; border-radius: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; background: var(--bg-card); color: var(--text-primary); border: 2px solid var(--border-color);">
+          <i class="fas fa-home"></i> Back to Home
+        </a>
+      </div>
+
     </div>
   </main>
 
-  <!-- FOOTER -->
-  <!-- <footer class="footer">
-    <div class="container">
-      <div class="footer-content">
-        <div class="footer-brand">
-          <div class="footer-logo">
-            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%2300A8E8' d='M50 10 L80 30 L80 70 L50 90 L20 70 L20 30 Z'/%3E%3Cpath fill='white' d='M35 40 Q50 35 65 40 L65 60 Q50 65 35 60 Z'/%3E%3C/svg%3E" alt="Kickshaus Logo">
-          </div>
-          <p class="footer-tagline">Kickshaus<br>Premium Footwear For Your Best Luxury</p>
-          <p class="footer-address" style="color:var(--text-muted); font-size:0.9rem; margin-top:12px; line-height:1.6;">
-            2 Prof. Ikechi Mgbeoji Street,<br>
-            Okun, Ajah, Lagos State, Nigeria
-          </p>
-        </div>
-
-        <div class="footer-links">
-          <div class="footer-column">
-            <h4>Shop</h4>
-            <ul>
-              <li><a href="collection.html">New Arrivals</a></li>
-              <li><a href="collection.html">Men</a></li>
-              <li><a href="collection.html">Women</a></li>
-              <li><a href="collection.html">Sale</a></li>
-            </ul>
-          </div>
-
-          <div class="footer-column">
-            <h4>Support</h4>
-            <ul>
-              <li><a href="index.html#contact">Contact Us</a></li>
-              <li><a href="#">FAQs</a></li>
-              <li><a href="#">Shipping</a></li>
-              <li><a href="#">Returns</a></li>
-            </ul>
-          </div>
-
-          <div class="footer-column">
-            <h4>Company</h4>
-            <ul>
-              <li><a href="#">About Us</a></li>
-              <li><a href="#">Careers</a></li>
-              <li><a href="#">Privacy Policy</a></li>
-              <li><a href="#">Terms</a></li>
-            </ul>
-          </div>
-
-          <div class="footer-column">
-            <h4>Follow Us</h4>
-            <div class="social-links">
-              <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-              <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-              <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-              <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="footer-bottom">
-        <p>&copy; 2025 Kickshaus. All rights reserved.</p>
-      </div>
-    </div>
-  </footer> -->
-
-  <!-- BACK TO TOP -->
   <button id="backToTop" class="back-to-top" aria-label="Back to top">
     <i class="fas fa-arrow-up"></i>
   </button>
 
-  <script src="global-state.js"></script>
-  <script src="script.js"></script>
+  <script src="public/js/api.js"></script>
+  <script src="public/js/global-state.js"></script>
+  <script src="public/js/api-client.js"></script>
+  <script src="public/js/script.js"></script>
   <script>
   document.addEventListener('DOMContentLoaded', () => {
-    // Load order summary
+    // Load order summary from localStorage
+    const currentOrder = JSON.parse(localStorage.getItem('currentOrder') || '{}');
     const checkoutSummary = JSON.parse(localStorage.getItem('checkoutSummary') || '{}');
-    document.getElementById('orderItemCount').textContent = checkoutSummary.itemCount || 0;
-    document.getElementById('orderSubtotal').textContent = `₦${(checkoutSummary.subtotal || 0).toLocaleString()}`;
-    document.getElementById('orderTax').textContent = `₦${(checkoutSummary.tax || 0).toLocaleString()}`;
-    document.getElementById('orderTotal').textContent = `₦${(checkoutSummary.total || 0).toLocaleString()}`;
+    
+    // Extract order data, preferring currentOrder when available
+    const orderData = currentOrder.order || checkoutSummary;
+    const itemCount = orderData.itemCount || checkoutSummary.itemCount || 0;
+    const subtotal = orderData.subtotal || checkoutSummary.subtotal || 0;
+    const tax = orderData.tax || checkoutSummary.tax || 0;
+    const total = orderData.total || orderData.total_fiat || currentOrder.total_fiat || checkoutSummary.total || 0;
+    
+    document.getElementById('orderItemCount').textContent = itemCount;
+    document.getElementById('orderSubtotal').textContent = `₦${subtotal.toLocaleString()}`;
+    document.getElementById('orderTax').textContent = `₦${tax.toLocaleString()}`;
+    document.getElementById('orderTotal').textContent = `₦${total.toLocaleString()}`;
+
+    // =====================================================
+    // BACKEND API FUNCTIONS (Centralized)
+    // =====================================================
+
+    // Dynamically load a script (fallback for QR library)
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.async = true;
+        s.onload = () => resolve(true);
+        s.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+        document.head.appendChild(s);
+      });
+    }
+
+    function showErrorBanner(message) {
+      const banner = document.getElementById('paymentErrorBanner');
+      if (banner) {
+        banner.textContent = String(message || 'An error occurred');
+        banner.style.display = 'block';
+      }
+    }
+
+    function clearErrorBanner() {
+      const banner = document.getElementById('paymentErrorBanner');
+      if (banner) {
+        banner.textContent = '';
+        banner.style.display = 'none';
+      }
+    }
+
+    /**
+     * Get cart items formatted for API
+     * Returns array of { product_id, quantity }
+     */
+    function getCartItemsForAPI() {
+      const buyNowOrder = JSON.parse(localStorage.getItem('buyNowOrder') || 'null');
+      const isBuyNow = buyNowOrder && buyNowOrder.length > 0;
+      const cart = isBuyNow ? buyNowOrder : KickshausState.cart;
+      
+      return cart.map(item => ({
+        product_id: item.id,
+        quantity: item.quantity
+      }));
+    }
+
+    /**
+     * Get auth token from localStorage
+     * Checks multiple possible storage keys for compatibility
+     */
+    function getAuthToken() {
+      // window.api handles token internally usually, but this helper is fine to keep
+      return localStorage.getItem('kickshaus_auth_token') || 
+             localStorage.getItem('token') || 
+             null;
+    }
+
+    /**
+     * Create order with Solana Pay via backend API
+     * Calls POST /api/payment/create-order via window.api
+     * Returns Solana Pay URL and reference key
+     */
+    async function createPaymentOrderAPI(authToken) {
+      const items = getCartItemsForAPI();
+      
+      if (items.length === 0) {
+        return { success: false, error: 'Cart is empty' };
+      }
+
+      try {
+        // Construct order data
+        let delivery = {};
+        try {
+          const raw = localStorage.getItem('deliveryDetails');
+          delivery = raw ? JSON.parse(raw) : {};
+        } catch (_) {
+          delivery = {};
+        }
+
+        const orderData = {
+          items,
+          // Map localStorage delivery details to backend fields
+          contact_name: delivery.fullName || null,
+          contact_email: delivery.email || null,
+          sender_phone: delivery.phone || null,
+          receiver_phone: delivery.receiverPhone || delivery.phone || null,
+          shipping_address: delivery.address || null,
+          city: delivery.city || null,
+          state: delivery.state || null,
+          notes: delivery.notes || null,
+        };
+
+        const data = await window.api.createOrder(orderData);
+        return data;
+
+      } catch (error) {
+        console.error('Create order error:', error);
+
+        if (error.message && error.message.includes('Token has expired')) {
+          showToast('Your session has expired. Please log in again.', 'error');
+          localStorage.removeItem('kickshaus_auth_token');
+          localStorage.removeItem('token');
+          setTimeout(() => {
+            window.location.href = 'login.html';
+          }, 2000);
+        } else {
+          showErrorBanner(error.message || 'Network error during order creation');
+        }
+
+        return { 
+          success: false, 
+          error: error.message || 'Network error during order creation'
+        };
+      }
+    }
+
+    /**
+     * Verify payment status via backend API
+     * Calls GET /api/payment/verify via window.api
+     * Returns payment status (pending, confirmed, failed)
+     */
+    async function verifyPaymentAPI(referenceKey, authToken) {
+      try {
+        const data = await window.api.verifyPayment(referenceKey);
+        return data;
+      } catch (error) {
+        console.error('Verify payment error:', error);
+        return { 
+          success: false, 
+          error: error.message || 'Network error during payment verification'
+        };
+      }
+    }
+
+    /**
+     * Creates and displays the Solana Pay QR code modal using backend API
+     */
+    async function showSolanaPayModalWithAPI() {
+      const authToken = getAuthToken();
+      if (!authToken) {
+        showToast('Please log in to complete your purchase', 'error');
+        setTimeout(() => window.location.href = 'login.html', 1500);
+        return;
+      }
+
+      showToast('Creating order...');
+
+      // 1. Get Payment Data from Backend
+      const result = await createPaymentOrderAPI(authToken);
+      
+      if (!result.success || !result.data) {
+        showToast(result.error || 'Failed to create order', 'error');
+        return;
+      }
+
+      const { solana_pay_url, reference_key, total_sol, total_fiat } = result.data;
+
+      // 2. Create Modal UI
+      const modal = document.createElement('div');
+      modal.className = 'solana-pay-modal';
+      modal.innerHTML = `
+        <div class="solana-pay-content">
+          <div class="solana-pay-header">
+            <h3 class="solana-pay-title"><i class="fas fa-coins" style="color: #9945FF;"></i> Pay with Solana</h3>
+            <button class="solana-pay-close">&times;</button>
+          </div>
+          
+          <div class="solana-pay-qr" id="solanaQrContainer" style="display: flex; justify-content: center; min-height: 256px;"></div>
+          
+          <div class="solana-pay-amount">${total_sol.toFixed(6)} SOL</div>
+          <p class="solana-pay-note">Total: ₦${total_fiat.toLocaleString()}</p>
+          
+          <div class="solana-pay-status" id="paymentStatus">
+            <div class="solana-pay-spinner"></div>
+            <span>Waiting for payment...</span>
+          </div>
+          
+          <button id="browserWalletBtn" style="display: none; width: 100%; margin-top: 15px; padding: 12px; background: #512da8; color: white; border-radius: 12px; font-weight: bold; cursor: pointer;">
+            Pay with Browser Wallet
+          </button>
+
+          <button class="solana-pay-wallet-btn" id="openWalletBtn" style="width: 100%; margin-top: 10px;">
+            <i class="fas fa-wallet"></i> Open Mobile App
+          </button>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+
+      // 3. Render QR Code (Standard)
+      const qrContainer = document.getElementById('solanaQrContainer');
+      if (window.QRCode) {
+        try {
+          const canvas = document.createElement('canvas');
+          window.QRCode.toCanvas(canvas, solana_pay_url, { width: 256, margin: 2 }, (e) => { if (e) console.error(e); });
+          qrContainer.appendChild(canvas);
+        } catch(e) { qrContainer.innerHTML = '<p>Scan Unavailable</p>'; }
+      }
+
+      // 4. BROWSER WALLET LOGIC (THE FIX)
+      const browserBtn = document.getElementById('browserWalletBtn');
+      const provider = window.solana || window.solflare;
+
+      if (provider) {
+        browserBtn.style.display = 'block';
+        
+        browserBtn.onclick = async () => {
+          const originalText = browserBtn.textContent;
+          browserBtn.textContent = "Connecting...";
+          browserBtn.disabled = true;
+
+          try {
+            // A. Connect Wallet
+            await provider.connect();
+            browserBtn.textContent = "Creating Transaction...";
+
+            // B. Create Transaction via Backend (Secure & Consistent)
+            const txResponse = await window.api.createTransaction(
+              result.data.order_id, 
+              provider.publicKey.toString()
+            );
+
+            if (!txResponse.success || !txResponse.data) {
+              throw new Error(txResponse.message || "Failed to create transaction");
+            }
+
+            const base64Tx = txResponse.data.transaction;
+
+            // C. Deserialize Transaction
+            // Convert base64 string to Uint8Array for Solana Web3.js
+            const txBuffer = Uint8Array.from(atob(base64Tx), c => c.charCodeAt(0));
+            const transaction = solanaWeb3.Transaction.from(txBuffer);
+
+            // D. Send (Wallet will handle signing)
+            browserBtn.textContent = "Please Approve...";
+            
+            // NOTE: If you still get 'Simulation Failed', it confirms you need more SOL.
+            const { signature } = await provider.signAndSendTransaction(transaction);
+            
+            console.log("Sent:", signature);
+            browserBtn.textContent = "Verifying...";
+            
+            // Notify Backend
+            handlePaymentConfirmedAPI(modal, { signature });
+
+          } catch (err) {
+            console.log("Detailed Payment Error:", err);
+            
+            let errorMessage = "Payment Failed";
+            
+            // 1. Check if it's a backend API error (which we threw as an Error object)
+            // If the message contains "Insufficient SOL balance", it came from our service
+            if (err.message && err.message.includes("Insufficient SOL balance")) {
+              errorMessage = "Insufficient Balance: Your wallet doesn't have enough SOL to cover this order.";
+            }
+            else if (err.message && err.message.includes("Order has expired")) {
+              errorMessage = "Order Expired: This order is no longer valid. Please start checkout again.";
+            }
+            // 2. Check for Solana-specific errors in simulation or preflight
+            else {
+              const errorString = JSON.stringify(err).toLowerCase();
+              const isInsufficientFunds = 
+                errorString.includes("insufficient") || 
+                errorString.includes("0x1") || // SystemProgram error code for insufficient funds
+                (err.message && err.message.toLowerCase().includes("insufficient"));
+
+              if (isInsufficientFunds) {
+                errorMessage = "Insufficient SOL: You need more SOL in your wallet to cover the price and network fees.";
+              } 
+              else if (err.message && err.message.includes("Simulation failed")) {
+                errorMessage = "Transaction Simulation Failed. This usually happens due to insufficient balance or network congestion.";
+              }
+              else if (errorString.includes("user rejected") || errorString.includes("declined")) {
+                errorMessage = "Transaction cancelled by user.";
+              }
+              else {
+                errorMessage = err.message || "An unexpected error occurred during payment.";
+              }
+            }
+
+            // Professional feedback via toast instead of alert
+            showToast(errorMessage, 'error');
+            
+            // Reset button state
+            browserBtn.textContent = originalText;
+            browserBtn.disabled = false;
+          }
+        };
+      }
+
+      // 5. Mobile Button Logic
+      document.getElementById('openWalletBtn').onclick = () => {
+        window.location.href = solana_pay_url;
+      };
+
+      // 6. Close Handler
+      const closeHandler = () => { stopPaymentPollingAPI(); modal.remove(); };
+      modal.querySelector('.solana-pay-close').onclick = closeHandler;
+      
+      // 7. Start Polling
+      startPaymentPollingAPI(reference_key, authToken, modal);
+    }
+
+    // Payment polling variables for API
+    let pollingIntervalAPI = null;
+    let pollingAttemptsAPI = 0;
+    const MAX_POLLING_ATTEMPTS_API = 100; // ~5 minutes at 3-second intervals
+    const POLLING_INTERVAL_MS_API = 3000; // 3 seconds
+
+    /**
+     * Start polling for payment confirmation via API
+     */
+    function startPaymentPollingAPI(referenceKey, authToken, modal) {
+      const statusElement = document.getElementById('paymentStatus');
+      pollingAttemptsAPI = 0;
+      
+      pollingIntervalAPI = setInterval(async () => {
+        pollingAttemptsAPI++;
+        
+        // Update status animation
+        if (statusElement) {
+          const dots = '.'.repeat((pollingAttemptsAPI % 3) + 1);
+          statusElement.innerHTML = `
+            <div class="solana-pay-spinner"></div>
+            <span>Checking payment status${dots}</span>
+          `;
+        }
+
+        const result = await verifyPaymentAPI(referenceKey, authToken);
+        
+        if (result.success && result.data) {
+          const status = result.data.status;
+          
+          if (status === 'confirmed') {
+            stopPaymentPollingAPI();
+            handlePaymentConfirmedAPI(modal, result.data);
+          } else if (status === 'failed') {
+            stopPaymentPollingAPI();
+            if (statusElement) {
+              statusElement.innerHTML = `
+                <i class="fas fa-times-circle" style="font-size: 1.5rem; color: #F44336;"></i>
+                <span>Payment failed</span>
+              `;
+              statusElement.style.background = 'rgba(244, 67, 54, 0.1)';
+              statusElement.style.color = '#F44336';
+            }
+          }
+          // If status is 'pending', continue polling
+        }
+        
+        // Stop polling after max attempts (timeout)
+        if (pollingAttemptsAPI >= MAX_POLLING_ATTEMPTS_API) {
+          stopPaymentPollingAPI();
+          if (statusElement) {
+            statusElement.innerHTML = `
+              <i class="fas fa-exclamation-triangle" style="color: #FF9800;"></i>
+              <span>Payment timeout. Please try again.</span>
+            `;
+            statusElement.style.background = 'rgba(255, 152, 0, 0.1)';
+            statusElement.style.color = '#FF9800';
+          }
+        }
+      }, POLLING_INTERVAL_MS_API);
+    }
+
+    /**
+     * Stop payment polling for API
+     */
+    function stopPaymentPollingAPI() {
+      if (pollingIntervalAPI) {
+        clearInterval(pollingIntervalAPI);
+        pollingIntervalAPI = null;
+      }
+      pollingAttemptsAPI = 0;
+    }
+
+    /**
+     * Handle confirmed payment via API
+     */
+    function handlePaymentConfirmedAPI(modal, paymentData) {
+      const statusElement = document.getElementById('paymentStatus');
+      if (statusElement) {
+        statusElement.innerHTML = `
+          <i class="fas fa-check-circle" style="font-size: 1.5rem;"></i>
+          <span>Payment confirmed!</span>
+        `;
+        statusElement.style.background = 'rgba(76, 175, 80, 0.1)';
+        statusElement.style.color = '#4CAF50';
+      }
+      
+      const walletBtn = document.getElementById('openWalletBtn');
+      if (walletBtn) {
+        walletBtn.style.display = 'none';
+      }
+      
+      setTimeout(() => {
+        const isBuyNow = checkoutSummary.isBuyNow;
+        if (isBuyNow) {
+          localStorage.removeItem('buyNowOrder');
+          localStorage.removeItem('pendingBuyNowOrder');
+        } else {
+          KickshausState.clearCart();
+        }
+        
+        localStorage.removeItem('checkoutSummary');
+        localStorage.removeItem('deliveryDetails');
+        localStorage.removeItem('validatedCart');
+        
+        modal.remove();
+        
+        showToast('✓ Payment successful! Thank you for your order.');
+        
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 2000);
+      }, 1500);
+    }
+
+    // =====================================================
+    // PAYSTACK LOGIC
+    // =====================================================
+
+    /**
+     * Initialize Paystack payment
+     */
+    async function initializePaystackPayment() {
+      const authToken = getAuthToken();
+      if (!authToken) {
+        showToast('Please log in to complete your purchase', 'error');
+        setTimeout(() => window.location.href = 'login.html', 1500);
+        return;
+      }
+
+      const items = getCartItemsForAPI();
+      if (items.length === 0) {
+        showToast('Cart is empty', 'error');
+        return;
+      }
+
+      showToast('Initializing Paystack...');
+
+      try {
+        let delivery = {};
+        try {
+          const raw = localStorage.getItem('deliveryDetails');
+          delivery = raw ? JSON.parse(raw) : {};
+        } catch (_) {
+          delivery = {};
+        }
+
+        // Determine callback URL (current page)
+        const callbackUrl = window.location.href.split('?')[0];
+
+        const payload = {
+          items,
+          contact_email: delivery.email || null,
+          contact_name: delivery.fullName || null,
+          sender_phone: delivery.phone || null,
+          receiver_phone: delivery.receiverPhone || delivery.phone || null,
+          shipping_address: delivery.address || null,
+          city: delivery.city || null,
+          state: delivery.state || null,
+          notes: delivery.notes || null,
+          callback_url: callbackUrl
+        };
+        
+        // If user is logged in but no email in delivery, the backend will use user's email if possible.
+        // But better to fail fast if we can't find email.
+        // The controller checks for email.
+
+        const response = await window.api.initializePaystack(payload);
+
+        if (response.success && response.data) {
+          // Redirect to Paystack
+          window.location.href = response.data.authorization_url;
+        } else {
+          showErrorBanner(response.error || 'Failed to initialize payment');
+        }
+      } catch (error) {
+        console.error('Paystack error:', error);
+        showErrorBanner(error.message || 'Payment initialization failed');
+      }
+    }
+
+    /**
+     * Verify Paystack payment on return
+     */
+    async function verifyPaystackOnReturn() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const reference = urlParams.get('reference') || urlParams.get('trxref');
+
+      if (reference) {
+        // Clear query params to avoid re-verification on refresh
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        // Show a modal or loading state
+        const modal = document.createElement('div');
+        modal.className = 'solana-pay-modal';
+        modal.innerHTML = `
+          <div class="solana-pay-content">
+            <h3 class="solana-pay-title">Verifying Payment</h3>
+            <div class="solana-pay-status" style="margin-top: 20px;">
+              <div class="solana-pay-spinner"></div>
+              <span>Confirming with Paystack...</span>
+            </div>
+            <p style="margin-top: 10px; color: #666; font-size: 0.9rem;">Please do not close this window.</p>
+          </div>
+        `;
+        document.body.appendChild(modal);
+
+        try {
+          console.log('Verifying reference:', reference);
+          const response = await window.api.verifyPaystack(reference);
+          console.log('Verify response:', response);
+
+          if (response.success && response.data) {
+             const status = response.data.status;
+             
+             if (status === 'confirmed' || status === 'success') {
+                 // SUCCESS
+                 modal.innerHTML = `
+                   <div class="solana-pay-content">
+                     <div style="text-align: center; color: #4CAF50;">
+                       <i class="fas fa-check-circle" style="font-size: 3rem; margin-bottom: 16px;"></i>
+                       <h3 class="solana-pay-title">Payment Successful!</h3>
+                       <p>Your order has been confirmed.</p>
+                       <p style="font-size: 0.9rem; color: #666; margin-top: 8px;">Order Ref: ${reference}</p>
+                       <p style="font-size: 0.9rem; color: #666;">Redirecting to home...</p>
+                     </div>
+                   </div>
+                 `;
+                 
+                 // Clear cart and storage safely
+                 try {
+                    if (typeof KickshausState !== 'undefined') {
+                        KickshausState.clearCart();
+                    }
+                    localStorage.removeItem('checkoutSummary');
+                    localStorage.removeItem('deliveryDetails');
+                    localStorage.removeItem('validatedCart');
+                    localStorage.removeItem('buyNowOrder');
+                    localStorage.removeItem('pendingBuyNowOrder');
+                 } catch (e) {
+                    console.error('Error clearing cart:', e);
+                 }
+
+                 setTimeout(() => {
+                   window.location.href = 'index.html';
+                 }, 2500);
+                 return;
+             }
+          }
+          
+          // FAILURE (if we get here)
+          throw new Error(response.error || 'Payment could not be verified.');
+
+        } catch (error) {
+           console.error('Verify loop error:', error);
+           modal.innerHTML = `
+             <div class="solana-pay-content">
+               <div style="text-align: center; color: #FF9800;">
+                 <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 16px;"></i>
+                 <h3 class="solana-pay-title">Verification Issue</h3>
+                 <p>We encountered an issue updating the display.</p>
+                 <p style="font-size: 0.85rem; color: #666;">${error.message || 'Unknown error'}</p>
+                 <div style="margin-top:20px;">
+                    <a href="index.html" class="solana-pay-close" style="display:inline-block; border: 1px solid #ccc; padding: 8px 16px; border-radius: 8px; cursor: pointer; text-decoration:none; color:#333;">Go Home</a>
+                 </div>
+               </div>
+             </div>
+           `;
+        }
+      }
+    }
+
+    // Check for return from Paystack
+    verifyPaystackOnReturn();
 
     // Payment selection with animation
     document.querySelectorAll('.payment-option').forEach(option => {
@@ -414,27 +1052,43 @@
         this.style.transform = 'scale(0.97)';
         setTimeout(() => { this.style.transform = ''; }, 140);
 
-        // Show processing
+        // Handle Cryptocurrency (Solana Pay)
+        if (method === 'crypto') {
+          const totalAmount = currentOrder.total_fiat || checkoutSummary.total || 0;
+          
+          if (totalAmount <= 0) {
+            showToast('No items in your order. Please add items first.', 'error');
+            return;
+          }
+          
+          // STRICT PRODUCTION: Always use API
+          showSolanaPayModalWithAPI();
+          return;
+        }
+
+        // Handle Paystack
+        if (method === 'paystack') {
+           initializePaystackPayment();
+           return;
+        }
+
+        // Default flow for other payment methods (Card, Bank Transfer)
         showToast('Processing payment...');
         
         setTimeout(() => {
-          // Clear Buy Now order if it exists
           const isBuyNow = checkoutSummary.isBuyNow;
           if (isBuyNow) {
             localStorage.removeItem('buyNowOrder');
             localStorage.removeItem('pendingBuyNowOrder');
           } else {
-            // Clear regular cart
             KickshausState.clearCart();
           }
           
-          // Clear checkout data
           localStorage.removeItem('checkoutSummary');
           localStorage.removeItem('deliveryDetails');
           
           showToast('✓ Payment successful! Thank you for your order.');
           
-          // Redirect to home
           setTimeout(() => {
             window.location.href = 'index.html';
           }, 2000);
@@ -443,7 +1097,5 @@
     });
   });
   </script>
-   <script src="global-state.js"></script>
-<script src="script.js"></script>
 </body>
 </html>

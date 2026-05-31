@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Become a Merchant - Kickshaus</title>
   
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="mobile-dark-mode.css">
+  <link rel="stylesheet" href="public/css/style.css">
+  <link rel="stylesheet" href="public/css/mobile-dark-mode.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   
@@ -354,6 +354,10 @@
     <h2 class="section-title">Application Form</h2>
     <p class="section-subtitle">Fill out the form below and we'll review your application within 48 hours</p>
     
+    <div style="text-align: center; margin-bottom: 30px;">
+      <p style="color: var(--text-muted);">Already have a merchant account? <a href="merchant-login.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">Login here</a></p>
+    </div>
+    
     <form id="merchantApplicationForm">
       <div class="form-group">
         <label for="fullName">Full Name *</label>
@@ -374,9 +378,27 @@
       </div>
       
       <div class="form-group">
-        <label for="phone">Phone Number *</label>
-        <input type="tel" id="phone" name="phone" required placeholder="+234">
+        <label for="password">Password * (min 8 characters)</label>
+        <input type="password" id="password" name="password" required minlength="8">
+        <div class="form-error" id="passwordError">Password must be at least 8 characters</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password *</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required>
+        <div class="form-error" id="confirmPasswordError">Passwords do not match</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <input type="tel" id="phone" name="phone" placeholder="+234">
         <div class="form-error" id="phoneError">Please enter a valid phone number</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="walletAddress">Solana Wallet Address * (for receiving payments)</label>
+        <input type="text" id="walletAddress" name="walletAddress" required placeholder="Your Solana wallet address">
+        <div class="form-error" id="walletAddressError">Please enter a valid Solana wallet address</div>
       </div>
       
       <div class="form-group">
@@ -415,69 +437,79 @@
     </a>
   </div>
 
-  <script src="global-state.js"></script>
-  <script src="universal-theme.js"></script>
+  <script src="public/js/api.js"></script>
+  <script src="public/js/global-state.js"></script>
+  <script src="public/js/api-client.js"></script>
+  <script src="public/js/universal-theme.js"></script>
   <script>
     document.getElementById('merchantApplicationForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const walletAddress = document.getElementById('walletAddress').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      
       const formData = {
         fullName: document.getElementById('fullName').value.trim(),
-        businessName: document.getElementById('businessName').value.trim(),
+        business_name: document.getElementById('businessName').value.trim(),
         email: document.getElementById('email').value.trim(),
-        phone: document.getElementById('phone').value.trim(),
+        password: password,
+        phone: phone.length >= 10 ? phone : undefined,
+        wallet_address: walletAddress,
         businessAddress: document.getElementById('businessAddress').value.trim(),
         website: document.getElementById('website').value.trim(),
         description: document.getElementById('description').value.trim(),
-        yearsInBusiness: document.getElementById('yearsInBusiness').value,
-        submittedAt: new Date().toISOString(),
-        status: 'pending'
+        yearsInBusiness: document.getElementById('yearsInBusiness').value
       };
       
       // Validate
       let isValid = true;
       
+      // Reset all errors
+      document.querySelectorAll('.form-error').forEach(el => el.classList.remove('show'));
+      
       if (formData.fullName.length < 3) {
         document.getElementById('fullNameError').classList.add('show');
         isValid = false;
-      } else {
-        document.getElementById('fullNameError').classList.remove('show');
       }
       
-      if (formData.businessName.length < 2) {
+      if (formData.business_name.length < 2) {
         document.getElementById('businessNameError').classList.add('show');
         isValid = false;
-      } else {
-        document.getElementById('businessNameError').classList.remove('show');
       }
       
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
         document.getElementById('emailError').classList.add('show');
         isValid = false;
-      } else {
-        document.getElementById('emailError').classList.remove('show');
       }
       
-      if (formData.phone.length < 10) {
-        document.getElementById('phoneError').classList.add('show');
+      if (password.length < 8) {
+        document.getElementById('passwordError').classList.add('show');
         isValid = false;
-      } else {
-        document.getElementById('phoneError').classList.remove('show');
+      }
+      
+      if (password !== confirmPassword) {
+        document.getElementById('confirmPasswordError').classList.add('show');
+        isValid = false;
+      }
+      
+      // Validate Solana wallet address (base58, 32-44 chars)
+      const walletRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+      if (!walletRegex.test(walletAddress)) {
+        document.getElementById('walletAddressError').classList.add('show');
+        isValid = false;
       }
       
       if (formData.businessAddress.length < 5) {
         document.getElementById('businessAddressError').classList.add('show');
         isValid = false;
-      } else {
-        document.getElementById('businessAddressError').classList.remove('show');
       }
       
       if (formData.description.length < 50) {
         document.getElementById('descriptionError').classList.add('show');
         isValid = false;
-      } else {
-        document.getElementById('descriptionError').classList.remove('show');
       }
       
       if (!isValid) return;
@@ -487,36 +519,37 @@
       btn.innerHTML = '<span>Submitting...</span> <i class="fas fa-spinner fa-spin"></i>';
       
       try {
-        // Save application
-        let applications = JSON.parse(localStorage.getItem('merchantApplications') || '[]');
-        formData.id = 'APP-' + Date.now();
-        applications.push(formData);
-        localStorage.setItem('merchantApplications', JSON.stringify(applications));
-        
-        // Add notification for admin
-        let notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
-        notifications.unshift({
-          id: 'NOTIF-' + Date.now(),
-          type: 'merchant_application',
-          title: `New merchant application from ${formData.businessName}`,
-          message: `${formData.fullName} has submitted a merchant application`,
-          applicationId: formData.id,
-          read: false,
-          timestamp: new Date().toISOString()
+        // Call backend API for merchant registration
+        const response = await KickshausAPI.registerMerchant({
+          business_name: formData.business_name,
+          email: formData.email,
+          password: formData.password,
+          phone: formData.phone,
+          wallet_address: formData.wallet_address
         });
-        localStorage.setItem('adminNotifications', JSON.stringify(notifications));
         
-        showToast('✅ Application submitted successfully! We\'ll review it within 48 hours.');
-        this.reset();
-        
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 2000);
+        if (response.success) {
+          showToast('✅ Application submitted successfully! We\'ll review it within 48 hours.');
+          this.reset();
+          
+          setTimeout(() => {
+            window.location.href = 'merchant-login.html';
+          }, 2000);
+        } else {
+          throw new Error(response.error || 'Registration failed');
+        }
         
       } catch (error) {
-        showToast('❌ Error submitting application. Please try again.', 'error');
+        console.error('Merchant registration error:', error);
+        showToast('❌ ' + (error.message || 'Error submitting application. Please try again.'), 'error');
         btn.disabled = false;
         btn.innerHTML = '<span>Submit Application</span> <i class="fas fa-paper-plane"></i>';
+        
+        // Show specific error for email if merchant already exists
+        if (error.message && error.message.toLowerCase().includes('email')) {
+          document.getElementById('emailError').textContent = error.message;
+          document.getElementById('emailError').classList.add('show');
+        }
       }
     });
   </script>

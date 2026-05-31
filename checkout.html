@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Checkout - Kickshaus</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="public/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -123,20 +123,6 @@
           <span id="checkoutTotal">₦0</span>
         </div>
 
-        <!-- COUPON -->
-        <div class="flex gap-2 mb-6">
-          <input id="couponInput"
-            class="flex-1 border rounded-lg px-3 py-2 text-sm"
-            placeholder="Enter coupon code" />
-
-          <button onclick="applyCoupon()"
-            class="border border-blue-600 text-blue-600 px-4 rounded-lg text-sm font-semibold hover:bg-blue-50 transition">
-            Apply
-          </button>
-        </div>
-
-        <p id="couponMsg" class="text-sm mb-6"></p>
-
         <!-- CTA BUTTONS -->
         <div class="space-y-3">
           <!-- Proceed to Delivery -->
@@ -161,39 +147,49 @@
     </div>
   </div>
 
-  <script src="global-state.js"></script>
+  <script src="public/js/api.js"></script>
+  <script src="public/js/global-state.js"></script>
+  <script src="public/js/api-client.js"></script>
   <script>
 
-    
-    let discountAmount = 0;
-
+    let checkoutDiscountAmount = 0;
     document.addEventListener('DOMContentLoaded', () => {
+      clearStaleBuyNowOrder();
       renderCheckoutItems();
     });
 
             // ===== THEME TOGGLE =====
-    const themeToggle = document.getElementById('themeToggle');
-    const body = document.body;
-    const themeIcon = themeToggle.querySelector('i');
+    // Theme toggle is handled by public/js/script.js to avoid redeclaration errors
 
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    if (savedTheme === 'dark') {
-      body.classList.add('dark-theme');
-      themeIcon.classList.replace('fa-moon', 'fa-sun');
+
+    // Reset stale Buy Now state when cart checkout is used
+    function clearStaleBuyNowOrder() {
+      const buyNowOrder = parseStoredValue('buyNowOrder', null);
+      const checkoutSummary = parseStoredValue('checkoutSummary', {});
+      const cart = KickshausState.cart || [];
+      const isBuyNowCheckout = checkoutSummary && checkoutSummary.isBuyNow;
+
+      if (!buyNowOrder) {
+        return;
+      }
+
+      const isValidBuyNow = Array.isArray(buyNowOrder) && buyNowOrder.length > 0;
+      const hasCartItems = cart.length > 0;
+
+      if (!isValidBuyNow || (hasCartItems && !isBuyNowCheckout)) {
+        localStorage.removeItem('buyNowOrder');
+      }
     }
 
-    themeToggle.addEventListener('click', () => {
-      body.classList.toggle('dark-theme');
-      const isDark = body.classList.contains('dark-theme');
-      
-      if (isDark) {
-        themeIcon.classList.replace('fa-moon', 'fa-sun');
-        localStorage.setItem('theme', 'dark');
-      } else {
-        themeIcon.classList.replace('fa-sun', 'fa-moon');
-        localStorage.setItem('theme', 'light');
+    function parseStoredValue(key, fallback) {
+      try {
+        const stored = localStorage.getItem(key);
+        return stored ? JSON.parse(stored) : fallback;
+      } catch (error) {
+        localStorage.removeItem(key);
+        return fallback;
       }
-    });
+    }
 
     // Render checkout items - handles both cart and "Buy Now" orders
     function renderCheckoutItems() {
@@ -203,12 +199,15 @@
       const proceedBtn = document.getElementById('proceedBtn');
       
       // Check if this is a "Buy Now" order
+      // FIX: Prioritize buyNowOrder only if it exists AND has items (length > 0)
+      // This fixes the bug where an empty array [] is truthy in JavaScript
       const buyNowOrder = JSON.parse(localStorage.getItem('buyNowOrder') || 'null');
-      const cart = buyNowOrder || KickshausState.cart;
+      const cart = (buyNowOrder && buyNowOrder.length > 0) ? buyNowOrder : KickshausState.cart;
       
       let itemCount;
-      if (buyNowOrder) {
-        itemCount = buyNowOrder.reduce((sum, item) => sum + item.quantity, 0);
+      // FIX: Also check for non-empty buyNowOrder array here
+      if (buyNowOrder && buyNowOrder.length > 0) {
+        itemCount = buyNowOrder.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
       } else {
         itemCount = KickshausState.getCartItemCount();
       }
@@ -226,29 +225,39 @@
       emptyState.style.display = 'none';
       proceedBtn.style.opacity = '1';
       proceedBtn.style.pointerEvents = 'auto';
-      itemCountText.textContent = `${itemCount} ${itemCount === 1 ? 'item' : 'items'} ${buyNowOrder ? 'to purchase' : 'in cart'}`;
+      // FIX: Also use the same check for isBuyNow text
+      const isBuyNow = buyNowOrder && buyNowOrder.length > 0;
+      itemCountText.textContent = `${itemCount} ${itemCount === 1 ? 'item' : 'items'} ${isBuyNow ? 'to purchase' : 'in cart'}`;
 
-      container.innerHTML = cart.map(item => `
+      container.innerHTML = cart.map(item => {
+        // Get image from various formats
+        const imageUrl = item.image 
+          || (Array.isArray(item.images) && item.images[0]) 
+          || (item.images && item.images.main) 
+          || 'https://via.placeholder.com/80x80?text=No+Image';
+        
+        return `
         <div class="flex items-center gap-4 border-b pb-4">
           <div class="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
             <img 
-              src="${item.image || item.images[0]}"
+              src="${imageUrl}"
               alt="${item.name}"
               class="w-full h-full object-contain"
+              onerror="this.src='https://via.placeholder.com/80x80?text=No+Image'"
             />
           </div>
 
           <div class="flex-1">
             <p class="font-semibold">${item.name}</p>
-            <p class="text-sm text-gray-500">Size: ${item.size} • Color: ${item.color}</p>
+            <p class="text-sm text-gray-500">Size: ${item.size || 'N/A'} • Color: ${item.color || 'N/A'}</p>
             <p class="text-sm text-gray-600 mt-1">Qty: ${item.quantity}</p>
           </div>
 
-          <p class="font-bold">₦${(item.price * item.quantity).toLocaleString()}</p>
+          <p class="font-bold">₦${(Number(item.price || 0) * Number(item.quantity || 0)).toLocaleString()}</p>
         </div>
-      `).join('');
+      `}).join('');
 
-      updateCheckoutSummary(cart, buyNowOrder);
+      updateCheckoutSummary(cart, isBuyNow);
     }
 
     // Update checkout summary
@@ -256,68 +265,217 @@
       let subtotal;
       
       if (isBuyNow) {
-        subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        subtotal = cart.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 0)), 0);
       } else {
         subtotal = KickshausState.getCartTotal();
       }
       
       const tax = Math.round(subtotal * 0.075); // 7.5% tax
-      const total = subtotal + tax - discountAmount;
+      const total = subtotal + tax - checkoutDiscountAmount;
 
       document.getElementById('checkoutSubtotal').textContent = `₦${subtotal.toLocaleString()}`;
       document.getElementById('checkoutTax').textContent = `₦${tax.toLocaleString()}`;
       document.getElementById('checkoutTotal').textContent = `₦${total.toLocaleString()}`;
 
-      if (discountAmount > 0) {
-        document.getElementById('checkoutDiscount').textContent = `-₦${discountAmount.toLocaleString()}`;
+      if (checkoutDiscountAmount > 0) {
+        document.getElementById('checkoutDiscount').textContent = `-₦${checkoutDiscountAmount.toLocaleString()}`;
       }
 
       // Save to localStorage for next pages
       localStorage.setItem('checkoutSummary', JSON.stringify({
         subtotal,
         tax,
-        discount: discountAmount,
+        discount: checkoutDiscountAmount,
         total,
-        itemCount: cart.reduce((sum, item) => sum + item.quantity, 0),
+        itemCount: cart.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
         isBuyNow: !!isBuyNow
       }));
     }
 
-    // Apply coupon
-    function applyCoupon() {
-      const coupon = document.getElementById('couponInput').value.trim().toUpperCase();
-      const msg = document.getElementById('couponMsg');
-      const discountRow = document.getElementById('discountRow');
-      
-      // Get current subtotal
+    // =====================================================
+    // API INTEGRATION - CENTRALIZED CLIENT
+    // =====================================================
+    
+    /**
+     * Get cart items formatted for API
+     * Returns array of { product_id, quantity }
+     */
+    function getCartItemsForAPI() {
       const buyNowOrder = JSON.parse(localStorage.getItem('buyNowOrder') || 'null');
-      const currentSubtotal = buyNowOrder ? 
-        buyNowOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 
-        KickshausState.getCartTotal();
+      const isBuyNow = buyNowOrder && buyNowOrder.length > 0;
+      const cart = isBuyNow ? buyNowOrder : KickshausState.cart;
+      
+      return cart.map(item => ({
+        product_id: item.id,
+        quantity: item.quantity
+      }));
+    }
 
-      if (coupon === 'SAVE500' || coupon === 'KICKSHAUS10') {
-        discountAmount = coupon === 'SAVE500' ? 500 : Math.round(currentSubtotal * 0.1);
-        discountRow.classList.remove('hidden');
-        msg.textContent = '✓ Coupon applied successfully!';
-        msg.className = 'text-sm mb-6 text-green-600 font-semibold';
-      } else if (coupon === '') {
-        msg.textContent = 'Please enter a coupon code';
-        msg.className = 'text-sm mb-6 text-gray-500';
-        discountAmount = 0;
-        discountRow.classList.add('hidden');
-      } else {
-        msg.textContent = '✗ Invalid coupon code';
-        msg.className = 'text-sm mb-6 text-red-600 font-semibold';
-        discountAmount = 0;
-        discountRow.classList.add('hidden');
+    /**
+     * Validate cart against backend
+     * Calls POST /api/cart/validate via window.api
+     * Returns validated total in NGN and item status
+     */
+    async function validateCartWithAPI() {
+      const items = getCartItemsForAPI();
+      
+      if (items.length === 0) {
+        return { success: false, error: 'Cart is empty' };
       }
 
-      const cart = buyNowOrder || KickshausState.cart;
-      updateCheckoutSummary(cart, buyNowOrder);
+      try {
+        // Use centralized API client
+        const data = await window.api.validateCart(items);
+        return data;
+      } catch (error) {
+        console.error('Cart validation error:', error);
+        return { 
+          success: false, 
+          error: error.message || 'Network error during cart validation'
+        };
+      }
     }
+
+    /**
+     * Create order with Solana Pay
+     * Calls POST /api/payment/create-order via window.api
+     * Returns Solana Pay URL and reference key
+     */
+    async function createPaymentOrder(authToken) {
+      const items = getCartItemsForAPI();
+      
+      if (items.length === 0) {
+        return { success: false, error: 'Cart is empty' };
+      }
+
+      try {
+        // Use centralized API client (handles auth automatically if token is stored)
+        // If authToken is passed explicitly, we might need to set it, but api.js uses localStorage
+        // For safety, we'll assume the user is logged in if they are here, or api.js handles it.
+        const data = await window.api.createOrder({ items });
+        return data;
+      } catch (error) {
+        console.error('Create order error:', error);
+        return { 
+          success: false, 
+          error: error.message || 'Network error during order creation'
+        };
+      }
+    }
+
+    /**
+     * Verify payment status
+     * Calls GET /api/payment/verify via window.api
+     * Returns payment status (pending, confirmed, failed)
+     */
+    async function verifyPayment(referenceKey, authToken) {
+      try {
+        const data = await window.api.verifyPayment(referenceKey);
+        return data;
+      } catch (error) {
+        console.error('Verify payment error:', error);
+        return { 
+          success: false, 
+          error: error.message || 'Network error during payment verification'
+        };
+      }
+    }
+
+    /**
+     * Poll for payment confirmation
+     * Polls every 3 seconds until payment is confirmed or failed
+     */
+    function startPaymentPolling(referenceKey, authToken, onStatusChange) {
+      let pollCount = 0;
+      const maxPolls = 100; // ~5 minutes of polling at 3-second intervals
+      
+      const pollInterval = setInterval(async () => {
+        pollCount++;
+        
+        if (pollCount > maxPolls) {
+          clearInterval(pollInterval);
+          onStatusChange({ status: 'timeout', error: 'Payment verification timed out' });
+          return;
+        }
+
+        const result = await verifyPayment(referenceKey, authToken);
+        
+        if (result.success && result.data) {
+          const status = result.data.status;
+          
+          if (status === 'confirmed') {
+            clearInterval(pollInterval);
+            onStatusChange({ 
+              status: 'confirmed', 
+              transactionSignature: result.data.transaction_signature,
+              orderId: result.data.order_id
+            });
+          } else if (status === 'failed') {
+            clearInterval(pollInterval);
+            onStatusChange({ status: 'failed', error: 'Payment failed' });
+          }
+          // If status is 'pending', continue polling
+        } else if (!result.success) {
+          // Don't stop polling on temporary errors, but log them
+          console.warn('Poll error:', result.error);
+        }
+      }, 3000);
+
+      // Return function to stop polling
+      return () => clearInterval(pollInterval);
+    }
+
+    /**
+     * Handle proceed to delivery with cart validation
+     * This can be called before navigating to delivery page
+     */
+    async function handleProceedToDelivery(event) {
+      const proceedBtn = document.getElementById('proceedBtn');
+      event.preventDefault();
+      
+      // Show loading state
+      proceedBtn.textContent = 'Validating...';
+      proceedBtn.style.pointerEvents = 'none';
+      
+      try {
+        const validationResult = await validateCartWithAPI();
+        
+        if (validationResult.success && validationResult.data && validationResult.data.success) {
+          // Store validation result for use in delivery/payment pages
+          localStorage.setItem('validatedCart', JSON.stringify(validationResult.data));
+          
+          // Ensure checkoutSummary is present (recompute for safety)
+          const buyNowOrder = JSON.parse(localStorage.getItem('buyNowOrder') || 'null');
+          const isBuyNow = buyNowOrder && buyNowOrder.length > 0;
+          const cart = isBuyNow ? buyNowOrder : KickshausState.cart;
+          updateCheckoutSummary(cart, isBuyNow);
+
+          // Navigate to delivery
+          window.location.href = 'delivery.html';
+        } else {
+          // Show error
+          event.preventDefault();
+          const errorMsg = validationResult.error || 
+            (validationResult.data && !validationResult.data.success ? 'Some items are out of stock' : 'Validation failed');
+          showToast(errorMsg, 'error');
+          
+          // Reset button
+          proceedBtn.textContent = 'Proceed to Delivery';
+          proceedBtn.style.pointerEvents = 'auto';
+        }
+      } catch (error) {
+        event.preventDefault();
+        showToast('Error validating cart. Please try again.', 'error');
+        
+        // Reset button
+        proceedBtn.textContent = 'Proceed to Delivery';
+        proceedBtn.style.pointerEvents = 'auto';
+      }
+    }
+    // Bind proceed button to validated handoff
+    document.getElementById('proceedBtn').addEventListener('click', handleProceedToDelivery);
   </script>
-   <script src="global-state.js"></script>
-  <script src="script.js"></script>
+  <script src="public/js/script.js"></script>
   
 </body>
 </html>

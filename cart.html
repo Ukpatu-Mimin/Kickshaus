@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Shopping Cart - Kickshaus</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="public/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   
@@ -127,147 +127,15 @@
 
   </div>
 
-  <script src="global-state.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const cartItemsContainer = document.getElementById('cartItemsContainer');
-      const emptyCartState = document.getElementById('emptyCartState');
-      const cartSummary = document.getElementById('cartSummary');
-      const cartItemCount = document.getElementById('cartItemCount');
-
-               // ===== THEME TOGGLE =====
-    const themeToggle = document.getElementById('themeToggle');
-    const body = document.body;
-    const themeIcon = themeToggle.querySelector('i');
-
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    if (savedTheme === 'dark') {
-      body.classList.add('dark-theme');
-      themeIcon.classList.replace('fa-moon', 'fa-sun');
-    }
-
-    themeToggle.addEventListener('click', () => {
-      body.classList.toggle('dark-theme');
-      const isDark = body.classList.contains('dark-theme');
-      
-      if (isDark) {
-        themeIcon.classList.replace('fa-moon', 'fa-sun');
-        localStorage.setItem('theme', 'dark');
-      } else {
-        themeIcon.classList.replace('fa-sun', 'fa-moon');
-        localStorage.setItem('theme', 'light');
-      }
-    });
-
-      // Render cart items
-      function renderCart() {
-        const cart = KickshausState.cart;
-        
-        // Update item count
-        const totalItems = KickshausState.getCartItemCount();
-        cartItemCount.textContent = `${totalItems} ${totalItems === 1 ? 'item' : 'items'}`;
-
-        if (cart.length === 0) {
-          cartItemsContainer.style.display = 'none';
-          cartSummary.style.display = 'none';
-          emptyCartState.style.display = 'block';
-          return;
-        }
-
-        cartItemsContainer.style.display = 'block';
-        cartSummary.style.display = 'block';
-        emptyCartState.style.display = 'none';
-
-        cartItemsContainer.innerHTML = cart.map((item, index) => `
-          <div class="cart-item bg-white rounded-xl p-5 grid grid-cols-1 md:grid-cols-6 items-center gap-4 shadow-sm hover:shadow-md transition">
-
-            <!-- IMAGE + NAME -->
-            <div class="flex items-center gap-4 col-span-2 cursor-pointer" onclick="window.location.href='product-detail.html?id=${item.id}'">
-              <div class="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
-                <img src="${item.image}" 
-                     class="w-full h-full object-contain"
-                     alt="${item.name}">
-              </div>
-              <div>
-                <p class="font-semibold text-lg">${item.name}</p>
-                <p class="text-sm text-gray-500">Size: ${item.size} • Color: ${item.color}</p>
-              </div>
-            </div>
-
-            <!-- PRICE -->
-            <div class="font-semibold text-lg">₦${item.price.toLocaleString()}</div>
-
-            <!-- QUANTITY -->
-            <div class="flex items-center border rounded-lg w-fit">
-              <button class="px-3 py-2 hover:bg-gray-100 transition" onclick="updateQuantity(${index}, ${item.quantity - 1})">
-                <i class="fas fa-minus"></i>
-              </button>
-              <span class="px-4 py-2 font-semibold">${item.quantity}</span>
-              <button class="px-3 py-2 hover:bg-gray-100 transition" onclick="updateQuantity(${index}, ${item.quantity + 1})">
-                <i class="fas fa-plus"></i>
-              </button>
-            </div>
-
-            <!-- SUBTOTAL -->
-            <div class="font-bold text-lg text-blue-600">₦${(item.price * item.quantity).toLocaleString()}</div>
-
-            <!-- REMOVE -->
-            <button class="text-2xl text-gray-400 hover:text-red-600 transition" onclick="removeItem(${index})" aria-label="Remove item">
-              <i class="fas fa-trash-alt"></i>
-            </button>
-          </div>
-        `).join('');
-
-        updateCartTotal();
-      }
-
-      // Update cart totals
-      function updateCartTotal() {
-        const subtotal = KickshausState.getCartTotal();
-        const tax = Math.round(subtotal * 0.075); // 7.5% tax
-        const total = subtotal + tax;
-
-        document.getElementById('subtotalAmount').textContent = `₦${subtotal.toLocaleString()}`;
-        document.getElementById('taxAmount').textContent = `₦${tax.toLocaleString()}`;
-        document.getElementById('totalAmount').textContent = `₦${total.toLocaleString()}`;
-
-        // Save cart summary to localStorage for checkout page
-        localStorage.setItem('cartSummary', JSON.stringify({
-          subtotal,
-          tax,
-          total,
-          itemCount: KickshausState.getCartItemCount()
-        }));
-      }
-
-      // Update quantity
-      window.updateQuantity = function(index, newQuantity) {
-        if (newQuantity < 1) return;
-        
-        KickshausState.updateCartQuantity(index, newQuantity);
-        renderCart();
-      };
-
-      // Remove item
-      window.removeItem = function(index) {
-        const item = KickshausState.cart[index];
-        showConfirmationModal(
-          `Remove "${item.name}" from your cart?`,
-          () => {
-            KickshausState.removeFromCart(index);
-            renderCart();
-            showToast('Item removed from cart');
-          }
-        );
-      };
-
-      // Initial render
-      renderCart();
-      
-      console.log('✨ Cart page loaded with', KickshausState.getCartItemCount(), 'items');
-    });
-  </script>
-<script src="script.js"></script>
+  <script src="public/js/api.js"></script>
+  <script src="public/js/global-state.js"></script>
+  <script src="public/js/api-client.js"></script>
+  <script src="public/js/cart.js"></script>
+  <script src="public/js/script.js"></script>
+ 
+  
+</body>
+</html>
  
   
 </body>

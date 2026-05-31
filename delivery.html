@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Delivery Details - Kickshaus</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="public/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -152,7 +152,7 @@ body.dark-theme .bg-white {
           <label class="block text-sm font-semibold mb-2">Receiver's Phone Number *</label>
           <input
             type="tel"
-            name="phone"
+            name="receiverPhone"
             placeholder="+234 XXX XXX XXXX"
             class="w-full bg-gray-50 border border-gray-300 py-3 px-4 rounded-lg text-base outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
             required
@@ -221,39 +221,38 @@ body.dark-theme .bg-white {
 
   </form>
 
-  <script src="global-state.js"></script>
+  <script src="public/js/api.js"></script>
+  <script src="public/js/global-state.js"></script>
+  <script src="public/js/api-client.js"></script>
   <script>
 
         // ===== THEME TOGGLE =====
-    const themeToggle = document.getElementById('themeToggle');
-    const body = document.body;
-    const themeIcon = themeToggle.querySelector('i');
-
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    if (savedTheme === 'dark') {
-      body.classList.add('dark-theme');
-      themeIcon.classList.replace('fa-moon', 'fa-sun');
-    }
-
-    themeToggle.addEventListener('click', () => {
-      body.classList.toggle('dark-theme');
-      const isDark = body.classList.contains('dark-theme');
-      
-      if (isDark) {
-        themeIcon.classList.replace('fa-moon', 'fa-sun');
-        localStorage.setItem('theme', 'dark');
-      } else {
-        themeIcon.classList.replace('fa-sun', 'fa-moon');
-        localStorage.setItem('theme', 'light');
-      }
-    });
+    // Theme toggle is handled by public/js/script.js to avoid redeclaration errors
 
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Load order summary (handles both cart and Buy Now)
-      const checkoutSummary = JSON.parse(localStorage.getItem('checkoutSummary') || '{}');
-      document.getElementById('orderTotal').textContent = `₦${(checkoutSummary.total || 0).toLocaleString()}`;
-      document.getElementById('orderItems').textContent = checkoutSummary.itemCount || 0;
+      // Load order summary (strict: must exist)
+      const summaryRaw = localStorage.getItem('checkoutSummary');
+      if (!summaryRaw) {
+        alert('Your checkout data is missing. Redirecting to cart.');
+        window.location.href = 'cart.html';
+        return;
+      }
+      let checkoutSummary;
+      try {
+        checkoutSummary = JSON.parse(summaryRaw);
+      } catch (e) {
+        alert('Corrupted checkout data. Redirecting to cart.');
+        window.location.href = 'cart.html';
+        return;
+      }
+      if (!checkoutSummary || typeof checkoutSummary.total === 'undefined' || typeof checkoutSummary.itemCount === 'undefined') {
+        alert('Incomplete checkout data. Redirecting to cart.');
+        window.location.href = 'cart.html';
+        return;
+      }
+      document.getElementById('orderTotal').textContent = `₦${Number(checkoutSummary.total || 0).toLocaleString()}`;
+      document.getElementById('orderItems').textContent = Number(checkoutSummary.itemCount || 0);
 
       // Handle form submission
       document.getElementById("deliveryForm").addEventListener("submit", function (e) {
@@ -265,6 +264,7 @@ body.dark-theme .bg-white {
           fullName: formData.get('fullName'),
           email: formData.get('email'),
           phone: formData.get('phone'),
+          receiverPhone: formData.get('receiverPhone'),
           address: formData.get('address'),
           city: formData.get('city'),
           state: formData.get('state'),
@@ -272,7 +272,7 @@ body.dark-theme .bg-white {
         };
 
         // Validate
-        if (!deliveryData.fullName || !deliveryData.email || !deliveryData.phone || 
+        if (!deliveryData.fullName || !deliveryData.email || !deliveryData.phone || !deliveryData.receiverPhone ||
             !deliveryData.address || !deliveryData.city || !deliveryData.state) {
           showToast("Please fill in all required fields.", 'error');
           return;
@@ -294,12 +294,11 @@ body.dark-theme .bg-white {
         
         setTimeout(() => {
           window.location.href = "payment.html";
-        }, 1000);
+        }, 800);
       });
     });
   </script>
-   <script src="global-state.js"></script>
-<script src="script.js"></script>
+   <script src="public/js/script.js"></script>
 
 </body>
 </html>
